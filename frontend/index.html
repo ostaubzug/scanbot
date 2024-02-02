@@ -3,28 +3,26 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="frontend/css/style.css" />
+    <link rel="stylesheet" href="css/style.css" />
     <title>Scanbot</title>
   </head>
   <body>
     <main class="container">
       <h1>Scanbot</h1>
       <div class="container">
-        <button>Scan Pdf</button>
+        <button onclick="scanPdf()">Scan Pdf</button>
         <button class="outline">Scan Tiff</button>
       </div>
     </main>
   </body>
 
   <script>
-    $(document).ready(function () {
-      $("#triggerButton").click(function () {
-        $.post("/trigger_function", function (data) {
-          if (data.success) {
-            alert("Function triggered successfully!");
-          }
-        });
-      });
-    });
+    function scanPdf() {
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", "/api/scan", true);
+      xhr.setRequestHeader("Content-Type", "application/json");
+      var requestBody = JSON.stringify({ scanType: "pdf" });
+      xhr.send(requestBody);
+    }
   </script>
 </html>
