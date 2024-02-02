@@ -15,4 +15,16 @@
       </div>
     </main>
   </body>
+
+  <script>
+    $(document).ready(function () {
+      $("#triggerButton").click(function () {
+        $.post("/trigger_function", function (data) {
+          if (data.success) {
+            alert("Function triggered successfully!");
+          }
+        });
+      });
+    });
+  </script>
 </html>
