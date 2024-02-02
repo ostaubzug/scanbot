@@ -2,7 +2,7 @@
   "name": "scanbot",
   "version": "1.0.0",
   "description": "Web Frontend to scan documents",
-  "main": "index.html",
+  "main": "frontend/index.html",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "sass": "sass frontend/css/custom.scss frontend/css/styles.css --watch"
