@@ -5,7 +5,7 @@
   "main": "index.html",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "sass": "sass frontend/css/custom.scss frontend/css/styles.css --watch"
+    "sass": "sass static/custom.scss static/styles.css --watch"
   },
   "author": "",
   "license": "ISC",
