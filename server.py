@@ -6,10 +6,12 @@ app = Flask(__name__)
 def home():
     return render_template('index.html')
 
-@app.route('/trigger_function', methods=['POST'])
-def trigger_function():
-    # This is where you can perform actions when the button is clicked.
-    print("Function triggered!")
+@app.route('/scanfunction', methods=['POST'])
+def scan_function():
+    data = request.get_json()  # Read the request body as JSON
+    print("Request body:", data)
+    # Perform actions with the request body data
+    # ...
     return jsonify(success=True)
 
 if __name__ == '__main__':

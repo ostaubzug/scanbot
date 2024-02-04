@@ -19,10 +19,12 @@
   <script>
     function scanPdf() {
       var xhr = new XMLHttpRequest();
-      xhr.open("POST", "/api/scan", true);
+      xhr.open("POST", "/scanfunction", true);
       xhr.setRequestHeader("Content-Type", "application/json");
       var requestBody = JSON.stringify({ scanType: "pdf" });
       xhr.send(requestBody);
     }
   </script>
+
+  <!-- Falls nicht erfolgreich einen Alarm mit Fehler ausgeben-->
 </html>

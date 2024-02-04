@@ -1,6 +1,13 @@
-die sh scripts ausserhalb des containers laufen lassen
-in den container nur server.py und das frontend kopieren
+FROM python:3
 
+WORKDIR /usr/src/app
 
--- volume zuweisen mit den shell scripts
--- port zuweisen für den Web Access
+RUN pip install jsonify
+RUN pip install flask
+
+EXPOSE 5400
+
+COPY server.py index.html css/style.css ./
+
+CMD [ "python", "./server.py" ]
+
