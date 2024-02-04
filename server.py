@@ -9,10 +9,8 @@ def home():
 @app.route('/scanfunction', methods=['POST'])
 def scan_function():
     data = request.get_json()  # Read the request body as JSON
-    print("Request body:", data)
-    # Perform actions with the request body data
-    # ...
-    return jsonify(success=True)
+
+    return data
 
 if __name__ == '__main__':
      app.run(host='0.0.0.0', port=5400, debug=True)

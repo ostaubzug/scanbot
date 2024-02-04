@@ -16,6 +16,7 @@
         <button onclick="scanPdf()">Scan Pdf</button>
         <button class="outline">Scan Tiff</button>
       </div>
+      <p id="result">Result</p>
     </main>
   </body>
 
@@ -24,6 +25,9 @@
       var xhr = new XMLHttpRequest();
       xhr.open("POST", "/scanfunction", true);
       xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.onreceive = function () {
+        document.getElementById("result").innerHTML = xhr.responseText;
+      };
       var requestBody = JSON.stringify({ scanType: "pdf" });
       xhr.send(requestBody);
     }
