@@ -13,25 +13,27 @@
     <main class="container">
       <h1>Scanbot</h1>
       <div class="container">
-        <button onclick="scanPdf()">Scan Pdf</button>
-        <button class="outline">Scan Tiff</button>
+        <button onclick="sendData('pdf')">Scan Pdf</button>
+        <button onclick="sendData('tiff')" type="submit" class="outline">
+          Scan Tiff
+        </button>
       </div>
       <p id="result">Result</p>
     </main>
+    <script>
+      async function sendData(scantype) {
+        const response = await fetch("/scanfunction", {
+          method: "post",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            type: scantype,
+          }),
+        });
+        const result = await response.text();
+        document.getElementById("result").innerText = result;
+      }
+    </script>
   </body>
-
-  <script>
-    function scanPdf() {
-      var xhr = new XMLHttpRequest();
-      xhr.open("POST", "/scanfunction", true);
-      xhr.setRequestHeader("Content-Type", "application/json");
-      xhr.onreceive = function () {
-        document.getElementById("result").innerHTML = xhr.responseText;
-      };
-      var requestBody = JSON.stringify({ scanType: "pdf" });
-      xhr.send(requestBody);
-    }
-  </script>
-
-  <!-- Falls nicht erfolgreich einen Alarm mit Fehler ausgeben-->
 </html>
