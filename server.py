@@ -10,16 +10,18 @@ def home():
 @app.route('/scanfunction', methods=['POST'])
 def scan_function():
     app.logger.info(request.get_json().get('type'))
-    list_pdf_files()
 
-    return createDownloadCard("test.pdf")
+    return createReturnHtml()
 
-def list_pdf_files():
+def createReturnHtml():
     pdf_files = glob.glob("scanRessources/*.pdf")
+    html = ""
     for file in pdf_files:
-        app.logger.info(file)
+        filename = file.split('/')[-1]
+        html += createDownloadCardForPdf(filename)
+    return html
 
-def createDownloadCard(file_name: str):
+def createDownloadCardForPdf(file_name: str):
     return f'<article><header>{file_name}</header><button role="button" class="secondary">Download</button></article>'
 
 if __name__ == '__main__':
