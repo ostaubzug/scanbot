@@ -46,27 +46,16 @@
           }),
         });
 
-        // Create a blob from the response data
         const blob = await response.blob();
-
-        // Create a temporary URL for the blob
         const url = URL.createObjectURL(blob);
 
-        // Create a link element
         const link = document.createElement("a");
         link.href = url;
-        link.download = "file.pdf"; // Set the desired filename for the downloaded file
+        link.download = file.split("/")[1];
 
-        // Append the link to the document body
         document.body.appendChild(link);
-
-        // Programmatically click the link to trigger the download
         link.click();
-
-        // Remove the link from the document body
         document.body.removeChild(link);
-
-        // Clean up the temporary URL
         URL.revokeObjectURL(url);
       }
     </script>
