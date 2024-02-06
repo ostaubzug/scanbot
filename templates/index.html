@@ -18,14 +18,7 @@
           Scan Tiff
         </button>
       </div>
-      <p id="result">Result</p>
-
-      <div class="grid">
-        <article>
-          <header>Pdf xy</header>
-          <button role="button" class="secondary">Download</button>
-        </article>
-      </div>
+      <div class="grid" id="downloadGrid"></div>
     </main>
     <script>
       async function sendData(scantype) {
@@ -39,7 +32,7 @@
           }),
         });
         const result = await response.text();
-        document.getElementById("result").innerText = result;
+        document.getElementById("downloadGrid").innerHTML = result;
       }
     </script>
   </body>
