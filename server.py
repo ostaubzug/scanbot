@@ -1,3 +1,4 @@
+import time
 from flask import Flask, render_template, request, jsonify, send_file
 import glob
 import os
@@ -11,6 +12,7 @@ def home():
 @app.route('/scanfunction', methods=['POST'])
 def scan_function():
     app.logger.info(request.get_json().get('type'))
+    time.sleep(2.5)
     return createDownloadGrid()
     
 

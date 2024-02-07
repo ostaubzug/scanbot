@@ -17,11 +17,13 @@
         <button onclick="sendData('tiff')" type="submit" class="outline">
           Scan Tiff
         </button>
+        <progress id="progress" style="visibility: hidden"></progress>
       </div>
       <div class="grid" id="downloadGrid"></div>
     </main>
     <script>
       async function sendData(scantype) {
+        document.getElementById("progress").style.visibility = "visible";
         const response = await fetch("/scanfunction", {
           method: "post",
           headers: {
@@ -33,6 +35,7 @@
         });
         const result = await response.text();
         document.getElementById("downloadGrid").innerHTML = result;
+        document.getElementById("progress").style.visibility = "hidden";
       }
 
       async function deleteFile(file) {
