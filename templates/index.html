@@ -13,17 +13,14 @@
     <main class="container">
       <h1>Scanbot</h1>
       <div class="container">
-        <button onclick="sendData('pdf')">Scan Pdf</button>
-        <button onclick="sendData('tiff')" type="submit" class="outline">
-          Scan Tiff
-        </button>
+        <button onclick="scanData('pdf')">Scan Pdf</button>
 
         <progress id="progress" style="visibility: hidden"></progress>
       </div>
       <div class="grid" id="downloadGrid"></div>
     </main>
     <script>
-      async function sendData(scantype) {
+      async function scanData(scantype) {
         document.getElementById("progress").style.visibility = "visible";
         const response = await fetch("/scanfunction", {
           method: "post",
