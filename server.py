@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify, send_file
 import glob
+import os
 
 app = Flask(__name__)
 
@@ -19,7 +20,8 @@ def scan_function():
 
 def createDownloadCardForPdf(path: str):
     file_name = path.split('/')[1]
-    return f'<article><header>{file_name}</header><button role="button" class="secondary" onclick="download(\'{path}\')">Download</button></article>'
+    return f"""<article><header>{file_name}</header><button role="button" class="secondary" onclick="download(\'{path}\')">Download</button>
+            <button role="button" class="outline" onclick="delete(\'{path}\')">Delete</button></article>"""
 
 
 @app.route('/download', methods=['POST'])
@@ -28,6 +30,10 @@ def download():
     app.logger.info(filepath)
     return send_file(filepath, as_attachment=True)
 
+@app.route('/delete', methods=['POST'])
+def delete():
+    os.remove(request.get_json().get('filepath'))
+    return True
 
 if __name__ == '__main__':
      app.run(host='0.0.0.0', port=5400, debug=True)
