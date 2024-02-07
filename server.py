@@ -21,7 +21,7 @@ def scan_function():
 def createDownloadCardForPdf(path: str):
     file_name = path.split('/')[1]
     return f"""<article><header>{file_name}</header><button role="button" class="secondary" onclick="download(\'{path}\')">Download</button>
-            <button role="button" class="outline" onclick="delete(\'{path}\')">Delete</button></article>"""
+            <button role="button" class="outline contrary" onclick="delete(\'{path}\')">Delete</button></article>"""
 
 
 @app.route('/download', methods=['POST'])
