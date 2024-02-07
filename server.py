@@ -1,7 +1,6 @@
-import time
+import subprocess
+import time, glob, os
 from flask import Flask, render_template, request, jsonify, send_file
-import glob
-import os
 
 app = Flask(__name__)
 
@@ -44,6 +43,10 @@ def download():
 def delete():
     os.remove(request.get_json().get('filepath'))
     return createDownloadGrid()
+
+def getDeviceName():
+    return subprocess.run('scanRessources/getMachineName.sh', capture_output=True, text=True).stdout
+     
 
 if __name__ == '__main__':
      app.run(host='0.0.0.0', port=5400, debug=True)
