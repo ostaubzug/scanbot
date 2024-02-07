@@ -35,6 +35,20 @@
         document.getElementById("downloadGrid").innerHTML = result;
       }
 
+      async function deleteFile(file) {
+        const response = await fetch("/deleteFile", {
+          method: "post",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            filepath: file,
+          }),
+        });
+        const result = await response.text();
+        document.getElementById("downloadGrid").innerHTML = result;
+      }
+
       async function download(file) {
         const response = await fetch("/download", {
           method: "post",
