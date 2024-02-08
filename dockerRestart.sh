@@ -8,3 +8,6 @@ docker run -i --rm\
     -p 5400:5400 \
     -v /Users/oliverstaub/gitroot/scanbot/scanRessources:/usr/src/app/scanRessources \
     scan-bot
+
+
+    # falls nötig den USB Port durchgeben

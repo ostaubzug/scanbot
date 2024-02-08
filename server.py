@@ -11,9 +11,8 @@ def home():
 @app.route('/scanfunction', methods=['POST'])
 def scan_function():
     app.logger.info(request.get_json().get('type'))
-    time.sleep(2.5)
-    return createDownloadGrid()
-    
+    subprocess.run('scanRessources/scanDocument.sh', capture_output=True, text=True)
+    createDownloadGrid()
 
 def createDownloadGrid():
     pdf_files = glob.glob("scanRessources/*.pdf")

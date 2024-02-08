@@ -1,1 +1,0 @@
-echo scanadf -L

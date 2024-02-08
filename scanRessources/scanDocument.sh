@@ -1,14 +1,7 @@
-https://github.com/rocketraman/sane-scan-pdf
+current_date=$(date +%Y-%m-%d_%H-%M-%S)
+scanimage --format=pdf -o scan_output${current_date}.pdf 
+ocrmypdf scan_output${current_date}.pdf scan_${current_date}.pdf
 
-device erkennen können mit dem Device listing feature
-ansonsten einen Fehler ausgeben
+rm scan_output${current_date}.pdf
 
-
-Ich brauche kein volume mehr ich kann alles im docker container machen
-
-Den USB Port einfach "durchreichen"
-
-
-Tiff support entfernen
-
-alles mit ocr installieren
+echo true
