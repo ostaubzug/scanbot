@@ -6,7 +6,6 @@ docker build --cache-from scan-bot -t scan-bot .
 docker run -i --rm\
     --name ScanBot \
     -p 5400:5400 \
-    -v /Users/oliverstaub/gitroot/scanbot/scanRessources:/usr/src/app/scanRessources \
     scan-bot
 
 
