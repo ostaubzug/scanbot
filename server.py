@@ -14,6 +14,7 @@ def scan_function():
     subprocess.run('scanRessources/scanDocument.sh', capture_output=True, text=True)
     createDownloadGrid()
 
+@app.route('/reload', methods=['POST'])
 def createDownloadGrid():
     pdf_files = glob.glob("scanRessources/*.pdf")
     html = ""

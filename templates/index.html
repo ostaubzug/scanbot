@@ -13,8 +13,8 @@
     <main class="container">
       <h1>Scanbot</h1>
       <div class="container">
-        <button onclick="scanData('pdf')">Scan Pdf</button>
-
+        <button onclick="scanData('pdf')" role="button">Scan Pdf</button>
+        <button class = "outline" role="button" onclick="reload()">reload</button>
         <progress id="progress" style="visibility: hidden"></progress>
       </div>
       <div class="grid" id="downloadGrid"></div>
@@ -34,6 +34,17 @@
         const result = await response.text();
         document.getElementById("downloadGrid").innerHTML = result;
         document.getElementById("progress").style.visibility = "hidden";
+      }
+
+      async function reload() {
+        const response = await fetch("/reload", {
+          method: "post",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        const result = await response.text();
+        document.getElementById("downloadGrid").innerHTML = result;
       }
 
       async function deleteFile(file) {
