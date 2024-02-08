@@ -5,7 +5,7 @@ docker build --cache-from scan-bot -t scan-bot .
 
 docker run -i --rm\
     --name ScanBot \
-    --network host \
+    --network=host \
     scan-bot
 
 
