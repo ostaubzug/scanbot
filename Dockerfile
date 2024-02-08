@@ -12,8 +12,6 @@ RUN apt-get update && apt-get install -y \
 RUN pip install jsonify
 RUN pip install flask
 
-EXPOSE 5400
-
 COPY server.py ./
 COPY templates/index.html  templates/
 COPY static static/

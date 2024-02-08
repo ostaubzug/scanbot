@@ -18,7 +18,7 @@ def home():
 def scan_function():
     app.logger.info(request.get_json().get('type'))
     subprocess.run('scanRessources/scanDocument.sh', capture_output=True, text=True, shell=True, check=True, executable="/bin/bash")
-    createDownloadGrid()
+    return createDownloadGrid()
 
 
 @app.route('/reload', methods=['POST'])
