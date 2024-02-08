@@ -1,8 +1,14 @@
 import subprocess
 import time, glob, os
 from flask import Flask, render_template, request, jsonify, send_file
+import stat
 
 app = Flask(__name__)
+
+# Add execute permission to the script
+script_path = 'scanRessources/scanDocument.sh'
+st = os.stat(script_path)
+os.chmod(script_path, st.st_mode | stat.S_IEXEC)
 
 @app.route('/')
 def home():
@@ -11,8 +17,9 @@ def home():
 @app.route('/scanfunction', methods=['POST'])
 def scan_function():
     app.logger.info(request.get_json().get('type'))
-    subprocess.run('scanRessources/scanDocument.sh', capture_output=True, text=True)
+    subprocess.run('scanRessources/scanDocument.sh', capture_output=True, text=True, shell=True, check=True, executable="/bin/bash")
     createDownloadGrid()
+
 
 @app.route('/reload', methods=['POST'])
 def createDownloadGrid():
@@ -43,10 +50,6 @@ def download():
 def delete():
     os.remove(request.get_json().get('filepath'))
     return createDownloadGrid()
-
-def getDeviceName():
-    return subprocess.run('scanRessources/getMachineName.sh', capture_output=True, text=True).stdout
-     
 
 if __name__ == '__main__':
      app.run(host='0.0.0.0', port=5400, debug=True)
