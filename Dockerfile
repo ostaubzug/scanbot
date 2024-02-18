@@ -7,6 +7,8 @@ RUN apt-get update && apt-get install -y \
     python-is-python3 \
     python3-pip \ 
     ocrmypdf \
+    ghostscript \
+    libtiff-tools \
     sane
  
 RUN pip install jsonify
