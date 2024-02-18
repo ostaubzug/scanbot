@@ -23,7 +23,7 @@ def scan_function():
 
 @app.route('/reload', methods=['POST'])
 def createDownloadGrid():
-    pdf_files = glob.glob("scanRessources/*.pdf")
+    pdf_files = glob.glob("scanRessources/*.pnm")
     html = ""
     for file in pdf_files:
         html += createDownloadCardForPdf(file)
