@@ -17,4 +17,4 @@ docker run -i --rm\
     #docker macvlan
 
     #https://github.com/sbs20/scanservjs/issues/202
-    https://publications.lexmark.com/publications/pdfs/network_scan_drivers/ger/d0e1116.html
+    #https://publications.lexmark.com/publications/pdfs/network_scan_drivers/ger/d0e1116.html
