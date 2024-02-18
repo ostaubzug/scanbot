@@ -3,7 +3,7 @@ docker rm ScanBot
 
 docker build --cache-from scan-bot -t scan-bot .
 
-docker run -d --rm\
+sudo docker run -d --rm\
     --name ScanBot \
     --network=host \
     --privileged \
