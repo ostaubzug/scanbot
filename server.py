@@ -35,7 +35,6 @@ def createDownloadCardForPdf(path: str):
     return f"""<article>
             <header>{file_name}</header>
             <button role="button" class="secondary" onclick="download(\'{path}\')">Download</button>
-            <button role="button" onclick="">Append</button>
             <button role="button" class="outline contrary" onclick="deleteFile(\'{path}\')">Delete</button>
             </article>"""
 
