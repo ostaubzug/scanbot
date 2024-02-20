@@ -13,6 +13,13 @@
     <main class="container">
       <h1>Scanbot</h1>
       <div class="container">
+        <input
+          type="text"
+          name="filename"
+          placeholder="example.pdf"
+          aria-label="Text"
+          id="filename"
+        />
         <button onclick="scanData('pdf')" role="button">Scan Pdf</button>
         <button class="outline" role="button" onclick="reload()">reload</button>
         <progress id="progress" style="visibility: hidden"></progress>
@@ -22,6 +29,7 @@
     <script>
       async function scanData(scantype) {
         document.getElementById("progress").style.visibility = "visible";
+        let filename = document.getElementById("filename").value;
         const response = await fetch("/scanfunction", {
           method: "post",
           headers: {
@@ -29,6 +37,7 @@
           },
           body: JSON.stringify({
             type: scantype,
+            filename: filename,
           }),
         });
         const result = await response.text();

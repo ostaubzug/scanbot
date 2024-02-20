@@ -17,7 +17,8 @@ def home():
 @app.route('/scanfunction', methods=['POST'])
 def scan_function():
     app.logger.info(request.get_json().get('type'))
-    subprocess.run('scanRessources/scanDocument.sh', capture_output=True, text=True, shell=True, check=True, executable="/bin/bash")
+    file_name = request.get_json().get('filename')
+    subprocess.run(f'scanRessources/scanDocument.sh {file_name}', capture_output=True, text=True, shell=True, check=True, executable="/bin/bash")
     return createDownloadGrid()
 
 
