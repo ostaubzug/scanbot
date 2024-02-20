@@ -6,6 +6,6 @@ tiff2pdf -o scanRessources/${filename}.pdf scanRessources/${filename}.tiff
 #ocrmypdf scanRessources/scan_output${current_date}.pdf scanRessources/scan_${current_date}.pdf
 
 #rm scanRessources/scan_output${current_date}.pdf
-rm scanRessources/${filename}.tiff.tiff
+rm scanRessources/${filename}.tiff
 
 echo true
