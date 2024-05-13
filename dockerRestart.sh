@@ -7,6 +7,7 @@ sudo docker run -i --rm\
     --name ScanBot \
     --network=host \
     --privileged \
+    --restart=always \
     scan-bot
 
 
