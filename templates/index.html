@@ -92,18 +92,11 @@
       }
 
       async function download(file) {
-        const response = await fetch("/download", {
-          method: "post",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            filepath: file,
-          }),
-        });
+        try {
+          console.log(`Starting download: ${file}`);
+          document.getElementById("progress").style.visibility = "visible";
 
-        async function downloadHighRes(file) {
-          const response = await fetch("/downloadHighREs", {
+          const response = await fetch("/download", {
             method: "post",
             headers: {
               "Content-Type": "application/json",
@@ -112,6 +105,47 @@
               filepath: file,
             }),
           });
+
+          if (!response.ok) {
+            throw new Error(`Download failed: ${response.status}`);
+          }
+
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = file.split("/")[1];
+
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        } catch (error) {
+          console.error(`Download error: ${error}`);
+          alert(`Download failed: ${error}`);
+        } finally {
+          document.getElementById("progress").style.visibility = "hidden";
+        }
+      }
+
+      async function downloadHighRes(file) {
+        try {
+          console.log(`Starting high-res download: ${file}`);
+          document.getElementById("progress").style.visibility = "visible";
+
+          const response = await fetch("/downloadHighRes", {
+            method: "post",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              filepath: file,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`Download failed: ${response.status}`);
+          }
 
           const reader = response.body.getReader();
           const chunks = [];
@@ -129,19 +163,12 @@
           a.download = file.split("/").pop();
           a.click();
           window.URL.revokeObjectURL(url);
+        } catch (error) {
+          console.error(`High-res download error: ${error}`);
+          alert(`Download failed: ${error}`);
+        } finally {
+          document.getElementById("progress").style.visibility = "hidden";
         }
-
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = file.split("/")[1];
-
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
       }
     </script>
   </body>

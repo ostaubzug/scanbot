@@ -57,28 +57,49 @@ def createDownloadCardForPdf(path: str):
 
 @app.route('/download', methods=['POST'])
 def download():
-    filepath = request.get_json().get('filepath')
-    app.logger.info(filepath)
-    return send_file(filepath, as_attachment=True)
+    try:
+        filepath = request.get_json().get('filepath')
+        app.logger.info(f"Starting download for: {filepath}")
+        if not os.path.exists(filepath):
+            app.logger.error(f"File not found: {filepath}")
+            return "File not found", 404
+        app.logger.info(f"Sending file: {filepath}")
+        return send_file(filepath, as_attachment=True)
+    except Exception as e:
+        app.logger.error(f"Download error: {str(e)}")
+        return str(e), 500
 
-@app.route('/downloadHighREs', methods=['POST'])
+@app.route('/downloadHighRes', methods=['POST'])
 def downloadHighRes():
-   filepath = request.get_json().get('filepath')
-   app.logger.info(filepath)
-   
-   def generate():
-       with open(filepath, 'rb') as f:
-           while True:
-               chunk = f.read(8192)  # 8KB chunks
-               if not chunk:
-                   break
-               yield chunk
+    try:
+        filepath = request.get_json().get('filepath')
+        app.logger.info(f"Starting high-res download for: {filepath}")
+        
+        if not os.path.exists(filepath):
+            app.logger.error(f"File not found: {filepath}")
+            return "File not found", 404
 
-   return Response(
-       generate(),
-       mimetype='application/octet-stream',
-       headers={'Content-Disposition': f'attachment; filename={os.path.basename(filepath)}'}
-   )
+        def generate():
+            try:
+                with open(filepath, 'rb') as f:
+                    while True:
+                        chunk = f.read(8192)
+                        if not chunk:
+                            break
+                        yield chunk
+            except Exception as e:
+                app.logger.error(f"Streaming error: {str(e)}")
+                raise
+
+        app.logger.info(f"Starting stream for: {filepath}")
+        return Response(
+            generate(),
+            mimetype='application/octet-stream',
+            headers={'Content-Disposition': f'attachment; filename={os.path.basename(filepath)}'}
+        )
+    except Exception as e:
+        app.logger.error(f"High-res download error: {str(e)}")
+        return str(e), 500
 
 @app.route('/deleteFile', methods=['POST'])
 def delete():
