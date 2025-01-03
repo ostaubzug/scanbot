@@ -28,7 +28,7 @@ def scan_function():
     return createDownloadGrid()
 
 @app.route('/scanfunctionTiffHighRes', methods=['POST'])
-def scan_function():
+def scan_function_highRes():
     app.logger.info(request.get_json().get('type'))
     file_name = request.get_json().get('filename')
     subprocess.run(f'scanRessources/scanTiffHighRes.sh {file_name}', capture_output=True, text=True, shell=True, check=True, executable="/bin/bash")

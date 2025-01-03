@@ -21,7 +21,7 @@
           id="filename"
         />
         <button onclick="scanData('pdf')" role="button">Scan Pdf</button>
-        <button onclick="scanData('tiff')" role="button">
+        <button onclick="scanHighRes('tiff')" role="button">
           Scan Tiff High Res
         </button>
         <button class="outline" role="button" onclick="reload()">reload</button>
@@ -34,6 +34,24 @@
         document.getElementById("progress").style.visibility = "visible";
         let filename = document.getElementById("filename").value;
         const response = await fetch("/scanfunction", {
+          method: "post",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            type: scantype,
+            filename: filename,
+          }),
+        });
+        const result = await response.text();
+        document.getElementById("downloadGrid").innerHTML = result;
+        document.getElementById("progress").style.visibility = "hidden";
+      }
+
+      async function scanHighRes(scantype) {
+        document.getElementById("progress").style.visibility = "visible";
+        let filename = document.getElementById("filename").value;
+        const response = await fetch("/scanfunctionTiffHighRes", {
           method: "post",
           headers: {
             "Content-Type": "application/json",
