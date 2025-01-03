@@ -102,6 +102,35 @@
           }),
         });
 
+        async function downloadHighRes(file) {
+          const response = await fetch("/downloadHighREs", {
+            method: "post",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              filepath: file,
+            }),
+          });
+
+          const reader = response.body.getReader();
+          const chunks = [];
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            chunks.push(value);
+          }
+
+          const blob = new Blob(chunks);
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = file.split("/").pop();
+          a.click();
+          window.URL.revokeObjectURL(url);
+        }
+
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
 

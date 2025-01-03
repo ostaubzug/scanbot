@@ -50,6 +50,7 @@ def createDownloadCardForPdf(path: str):
     return f"""<article>
             <header>{file_name}</header>
             <button role="button" class="secondary" onclick="download(\'{path}\')">Download</button>
+            <button role="button" class="secondary" onclick="downloadHighRes(\'{path}\')">DownloadHighRes</button>
             <button role="button" class="outline contrary" onclick="deleteFile(\'{path}\')">Delete</button>
             </article>"""
 
@@ -59,6 +60,25 @@ def download():
     filepath = request.get_json().get('filepath')
     app.logger.info(filepath)
     return send_file(filepath, as_attachment=True)
+
+@app.route('/downloadHighREs', methods=['POST'])
+def downloadHighRes():
+   filepath = request.get_json().get('filepath')
+   app.logger.info(filepath)
+   
+   def generate():
+       with open(filepath, 'rb') as f:
+           while True:
+               chunk = f.read(8192)  # 8KB chunks
+               if not chunk:
+                   break
+               yield chunk
+
+   return Response(
+       generate(),
+       mimetype='application/octet-stream',
+       headers={'Content-Disposition': f'attachment; filename={os.path.basename(filepath)}'}
+   )
 
 @app.route('/deleteFile', methods=['POST'])
 def delete():
