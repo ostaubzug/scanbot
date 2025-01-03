@@ -10,6 +10,12 @@ script_path = 'scanRessources/scanDocument.sh'
 st = os.stat(script_path)
 os.chmod(script_path, st.st_mode | stat.S_IEXEC)
 
+script_path = 'scanRessources/scanTiffHighRes.sh'
+st = os.stat(script_path)
+os.chmod(script_path, st.st_mode | stat.S_IEXEC)
+
+
+
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -20,6 +26,14 @@ def scan_function():
     file_name = request.get_json().get('filename')
     subprocess.run(f'scanRessources/scanDocument.sh {file_name}', capture_output=True, text=True, shell=True, check=True, executable="/bin/bash")
     return createDownloadGrid()
+
+@app.route('/scanfunctionTiffHighRes', methods=['POST'])
+def scan_function():
+    app.logger.info(request.get_json().get('type'))
+    file_name = request.get_json().get('filename')
+    subprocess.run(f'scanRessources/scanTiffHighRes.sh {file_name}', capture_output=True, text=True, shell=True, check=True, executable="/bin/bash")
+    return createDownloadGrid()
+
 
 
 @app.route('/reload', methods=['POST'])
