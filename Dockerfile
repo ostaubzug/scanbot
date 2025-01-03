@@ -18,6 +18,7 @@ COPY server.py ./
 COPY templates/index.html  templates/
 COPY static static/
 COPY scanRessources/scanDocument.sh scanRessources/
+COPY scanRessources/scanTiffHighRes.sh scanRessources/
 
 CMD [ "python", "./server.py" ]
 
