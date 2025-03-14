@@ -13,6 +13,7 @@ st = os.stat(script_path)
 os.chmod(script_path, st.st_mode | stat.S_IEXEC)
 
 selected_scanner = None
+selected_dpi = "600"
 
 def get_available_scanners():
     try:
@@ -23,7 +24,6 @@ def get_available_scanners():
         scanners = []
         for line in result.stdout.split('\n'):
             if line.strip():
-                # Extract device name from the output
                 device = line.split('`')[1].split("'")[0] if '`' in line else None
                 if device:
                     scanners.append({
@@ -45,6 +45,9 @@ def scan_function():
     
     if not file_name:
         return jsonify({"error": "Filename is required"}), 400
+    
+    # Remove .pdf extension if present to avoid creating file.pdf.pdf
+    file_name = file_name.rstrip('.pdf')
         
     try:
         result = subprocess.run(f'scanRessources/scanDocument.sh {file_name}', 
@@ -155,6 +158,37 @@ def set_scanner():
         
     return jsonify({'success': True, 'selected_scanner': selected_scanner})
 
+@app.route('/api/dpi', methods=['GET'])
+def get_dpi():
+    global selected_dpi
+    
+    try:
+        if os.path.exists('scanRessources/dpi_config'):
+            with open('scanRessources/dpi_config', 'r') as f:
+                selected_dpi = f.read().strip()
+    except Exception as e:
+        app.logger.error(f"Failed to read DPI configuration: {e}")
+    
+    return jsonify({'dpi': selected_dpi})
+
+@app.route('/api/dpi', methods=['POST'])
+def set_dpi():
+    global selected_dpi
+    data = request.get_json()
+    selected_dpi = data.get('dpi')
+    
+    if not selected_dpi:
+        return jsonify({'error': 'DPI value is required'}), 400
+    
+    try:
+        with open('scanRessources/dpi_config', 'w') as f:
+            f.write(selected_dpi)
+    except Exception as e:
+        app.logger.error(f"Failed to save DPI configuration: {e}")
+        return jsonify({'error': 'Failed to save DPI configuration'}), 500
+        
+    return jsonify({'success': True, 'dpi': selected_dpi})
+
 @app.route('/add_page', methods=['POST'])
 def add_page():
     try:
@@ -164,8 +198,9 @@ def add_page():
         
         if not original_file or not new_filename:
             return jsonify({"error": "Both original file and new filename are required"}), 400
+        
+        new_filename = new_filename.rstrip('.pdf')
             
-        # Scan new page
         result = subprocess.run(f'scanRessources/scanDocument.sh {new_filename}', 
                               capture_output=True, 
                               text=True, 
@@ -177,17 +212,13 @@ def add_page():
         
         if not os.path.exists(new_pdf):
             return jsonify({"error": "Failed to create new page"}), 500
-            
-        # Merge PDFs
         merger = PdfMerger()
         merger.append(original_file)
         merger.append(new_pdf)
         
-        # Save merged PDF
         merger.write(original_file)
         merger.close()
         
-        # Clean up temporary new page
         os.remove(new_pdf)
         
         html = generate_download_grid()

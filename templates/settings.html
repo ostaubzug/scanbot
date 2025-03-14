@@ -57,6 +57,11 @@
         margin-left: 1rem;
         display: none;
       }
+      .settings-section {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid #eee;
+      }
     </style>
   </head>
   <body>
@@ -85,6 +90,24 @@
           <div id="success-message" class="success-message"></div>
           <div id="scanner-list" class="scanner-list">
             <p>Click "Scan for Devices" to find available scanners.</p>
+          </div>
+
+          <!-- DPI Settings Section -->
+          <div class="settings-section">
+            <h2>Scan Resolution</h2>
+            <label for="dpi-select">Select DPI (Dots Per Inch):</label>
+            <select id="dpi-select" onchange="saveDpiSetting()">
+              <option value="150">150 DPI (Draft)</option>
+              <option value="300">300 DPI (Normal)</option>
+              <option value="600" selected>600 DPI (High Quality)</option>
+              <option value="1200">1200 DPI (Very High Quality)</option>
+            </select>
+            <p>
+              <small
+                >Higher DPI values produce better quality scans but result in
+                larger file sizes and longer scanning times.</small
+              >
+            </p>
           </div>
         </div>
       </div>
@@ -126,6 +149,9 @@
           const response = await fetch("/api/scanners");
           const data = await response.json();
 
+          // Stop the search indication as soon as we have a response
+          setSearching(false);
+
           const scannerList = document.getElementById("scanner-list");
           if (data.scanners.length === 0) {
             scannerList.innerHTML =
@@ -156,7 +182,6 @@
         } catch (error) {
           showError("Failed to scan for devices. Please try again.");
           console.error("Error:", error);
-        } finally {
           setSearching(false);
         }
       }
@@ -176,15 +201,70 @@
           }
 
           showSuccess("Scanner selected successfully");
-          await scanForDevices(); // Refresh the list to show the selection
+          // Don't rescan for devices after selection
+          // Just update the UI to show the selection
+          document.querySelectorAll(".scanner-item").forEach((item) => {
+            if (
+              item
+                .querySelector("button")
+                .getAttribute("onclick")
+                .includes(device)
+            ) {
+              item.classList.add("selected");
+              item.querySelector("button").textContent = "Selected";
+            } else {
+              item.classList.remove("selected");
+              item.querySelector("button").textContent = "Select Scanner";
+            }
+          });
         } catch (error) {
           showError("Failed to select scanner. Please try again.");
           console.error("Error:", error);
         }
       }
 
-      // Scan for devices when the page loads
-      window.addEventListener("load", scanForDevices);
+      async function saveDpiSetting() {
+        const dpiValue = document.getElementById("dpi-select").value;
+        try {
+          const response = await fetch("/api/dpi", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ dpi: dpiValue }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to save DPI setting");
+          }
+
+          showSuccess("DPI setting saved successfully");
+        } catch (error) {
+          showError("Failed to save DPI setting. Please try again.");
+          console.error("Error:", error);
+        }
+      }
+
+      // Load saved DPI setting
+      async function loadDpiSetting() {
+        try {
+          const response = await fetch("/api/dpi");
+          if (response.ok) {
+            const data = await response.json();
+            if (data.dpi) {
+              document.getElementById("dpi-select").value = data.dpi;
+            }
+          }
+        } catch (error) {
+          console.error("Error loading DPI setting:", error);
+        }
+      }
+
+      // Initialize page
+      window.addEventListener("load", async () => {
+        await scanForDevices();
+        await loadDpiSetting();
+      });
     </script>
   </body>
 </html>
