@@ -6,7 +6,7 @@
 
 ## Demo
 
-![Scanbot Demo](./demo/scanbot-demo.gif)
+<img src="./demo/scanbot-demo.gif" alt="Scanbot Demo" width="800"/>
 
 ## Quick Start
 
