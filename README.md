@@ -4,6 +4,10 @@
 [![Docker Image](https://img.shields.io/docker/image-size/oli1115/scanbot/latest?logo=docker)](https://hub.docker.com/r/oli1115/scanbot)
 [![Docker Pulls](https://img.shields.io/docker/pulls/oli1115/scanbot?logo=docker)](https://hub.docker.com/r/oli1115/scanbot)
 
+## Demo
+
+![Scanbot Demo](./demo/scanbot-demo.gif)
+
 ## Quick Start
 
 Pull and run the Docker image:
