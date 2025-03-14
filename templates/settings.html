@@ -292,6 +292,15 @@
             const data = await response.json();
             if (data.selected_scanner) {
               console.log("Loaded saved scanner:", data.selected_scanner);
+
+              const scannerList = document.getElementById("scanner-list");
+              scannerList.innerHTML = `
+                <div class="scanner-item selected">
+                  <p>${data.selected_scanner}</p>
+                  <div class="selected-badge">Selected</div>
+                </div>
+                <p>Click "Scan for Devices" to find additional scanners.</p>
+              `;
             }
           }
         } catch (error) {
@@ -301,7 +310,6 @@
 
       window.addEventListener("load", async () => {
         await loadSavedScanner();
-        await scanForDevices();
         await loadDpiSetting();
       });
     </script>

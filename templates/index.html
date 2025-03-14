@@ -46,11 +46,19 @@
     </main>
     <script>
       window.addEventListener("load", function () {
+        reload();
+      
         const savedGrid = localStorage.getItem("downloadGridState");
         if (savedGrid) {
-          document.getElementById("downloadGrid").innerHTML = savedGrid;
-        } else {
-          reload();
+          const serverResponse =
+            document.getElementById("downloadGrid").innerHTML;
+
+          try {
+            document.getElementById("downloadGrid").innerHTML = savedGrid;
+          } catch (error) {
+            console.error("Error restoring from localStorage:", error);
+            document.getElementById("downloadGrid").innerHTML = serverResponse;
+          }
         }
       });
 
@@ -102,6 +110,7 @@
 
       async function reload() {
         try {
+          document.getElementById("progress").style.visibility = "visible";
           const response = await fetch("/reload", {
             method: "post",
             headers: {
@@ -116,11 +125,14 @@
           saveState();
         } catch (error) {
           showError(error.message);
+        } finally {
+          document.getElementById("progress").style.visibility = "hidden";
         }
       }
 
       async function deleteFile(file) {
         try {
+          document.getElementById("progress").style.visibility = "visible";
           const response = await fetch("/deleteFile", {
             method: "post",
             headers: {
@@ -140,6 +152,8 @@
           saveState();
         } catch (error) {
           showError(error.message);
+        } finally {
+          document.getElementById("progress").style.visibility = "hidden";
         }
       }
 
@@ -147,6 +161,25 @@
         try {
           console.log(`Starting download: ${file}`);
           document.getElementById("progress").style.visibility = "visible";
+
+          // First check if the file exists
+          const checkResponse = await fetch("/check_file", {
+            method: "post",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              filepath: file,
+            }),
+          });
+
+          const checkData = await checkResponse.json();
+
+          if (!checkData.exists) {
+            showError(`File not found: ${file}. Refreshing file list...`);
+            await reload();
+            return;
+          }
 
           const response = await fetch("/download", {
             method: "post",
@@ -174,7 +207,7 @@
           URL.revokeObjectURL(url);
         } catch (error) {
           console.error(`Download error: ${error}`);
-          alert(`Download failed: ${error}`);
+          showError(`Download failed: ${error}`);
         } finally {
           document.getElementById("progress").style.visibility = "hidden";
         }
@@ -187,10 +220,31 @@
           return;
         }
 
-        document.getElementById("progress").style.visibility = "visible";
-        document.getElementById("error-message").style.display = "none";
-
+        // First check if the original file exists
         try {
+          const checkResponse = await fetch("/check_file", {
+            method: "post",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              filepath: originalFile,
+            }),
+          });
+
+          const checkData = await checkResponse.json();
+
+          if (!checkData.exists) {
+            showError(
+              `Original file not found: ${originalFile}. Refreshing file list...`
+            );
+            await reload();
+            return;
+          }
+
+          document.getElementById("progress").style.visibility = "visible";
+          document.getElementById("error-message").style.display = "none";
+
           const response = await fetch("/add_page", {
             method: "post",
             headers: {

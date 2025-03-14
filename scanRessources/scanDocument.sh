@@ -14,7 +14,7 @@ fi
 if [ -f "scanRessources/dpi_config" ]; then
     selected_dpi=$(cat scanRessources/dpi_config)
 else
-    selected_dpi="600"  # Default to 600 DPI if not configured
+    selected_dpi="600"
 fi
 
 scanimage -d "$selected_scanner" --resolution=$selected_dpi --mode=Color --depth=8 --format=tiff -o scanRessources/${filename}.tiff

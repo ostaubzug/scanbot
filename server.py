@@ -167,6 +167,8 @@ def get_scanner():
         if os.path.exists('scanRessources/scanner_config'):
             with open('scanRessources/scanner_config', 'r') as f:
                 selected_scanner = f.read().strip()
+                if selected_scanner:  # Only return if we have a valid scanner
+                    return jsonify({'selected_scanner': selected_scanner})
     except Exception as e:
         app.logger.error(f"Failed to read scanner configuration: {e}")
     
@@ -249,6 +251,19 @@ def add_page():
     except Exception as e:
         app.logger.error(f"Error adding page: {str(e)}")
         return jsonify({"error": f"Failed to add page: {str(e)}"}), 500
+
+@app.route('/check_file', methods=['POST'])
+def check_file():
+    try:
+        filepath = request.get_json().get('filepath')
+        if not filepath:
+            return jsonify({"exists": False, "error": "No filepath provided"}), 400
+            
+        file_exists = os.path.exists(filepath)
+        return jsonify({"exists": file_exists})
+    except Exception as e:
+        app.logger.error(f"Error checking file: {str(e)}")
+        return jsonify({"exists": False, "error": str(e)}), 500
 
 if __name__ == '__main__':
      app.run(host='0.0.0.0', port=5400, debug=True)
