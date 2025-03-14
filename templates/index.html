@@ -21,9 +21,6 @@
           id="filename"
         />
         <button onclick="scanData('pdf')" role="button">Scan Pdf</button>
-        <button onclick="scanHighRes('tiff')" role="button">
-          Scan Tiff High Res
-        </button>
         <button class="outline" role="button" onclick="reload()">reload</button>
         <progress id="progress" style="visibility: hidden"></progress>
       </div>
@@ -34,24 +31,6 @@
         document.getElementById("progress").style.visibility = "visible";
         let filename = document.getElementById("filename").value;
         const response = await fetch("/scanfunction", {
-          method: "post",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            type: scantype,
-            filename: filename,
-          }),
-        });
-        const result = await response.text();
-        document.getElementById("downloadGrid").innerHTML = result;
-        document.getElementById("progress").style.visibility = "hidden";
-      }
-
-      async function scanHighRes(scantype) {
-        document.getElementById("progress").style.visibility = "visible";
-        let filename = document.getElementById("filename").value;
-        const response = await fetch("/scanfunctionTiffHighRes", {
           method: "post",
           headers: {
             "Content-Type": "application/json",
@@ -122,49 +101,6 @@
           URL.revokeObjectURL(url);
         } catch (error) {
           console.error(`Download error: ${error}`);
-          alert(`Download failed: ${error}`);
-        } finally {
-          document.getElementById("progress").style.visibility = "hidden";
-        }
-      }
-
-      async function downloadHighRes(file) {
-        try {
-          console.log(`Starting high-res download: ${file}`);
-          document.getElementById("progress").style.visibility = "visible";
-
-          const response = await fetch("/downloadHighRes", {
-            method: "post",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              filepath: file,
-            }),
-          });
-
-          if (!response.ok) {
-            throw new Error(`Download failed: ${response.status}`);
-          }
-
-          const reader = response.body.getReader();
-          const chunks = [];
-
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            chunks.push(value);
-          }
-
-          const blob = new Blob(chunks);
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = file.split("/").pop();
-          a.click();
-          window.URL.revokeObjectURL(url);
-        } catch (error) {
-          console.error(`High-res download error: ${error}`);
           alert(`Download failed: ${error}`);
         } finally {
           document.getElementById("progress").style.visibility = "hidden";

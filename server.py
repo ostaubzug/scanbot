@@ -11,12 +11,6 @@ script_path = 'scanRessources/scanDocument.sh'
 st = os.stat(script_path)
 os.chmod(script_path, st.st_mode | stat.S_IEXEC)
 
-script_path = 'scanRessources/scanTiffHighRes.sh'
-st = os.stat(script_path)
-os.chmod(script_path, st.st_mode | stat.S_IEXEC)
-
-
-
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -27,15 +21,6 @@ def scan_function():
     file_name = request.get_json().get('filename')
     subprocess.run(f'scanRessources/scanDocument.sh {file_name}', capture_output=True, text=True, shell=True, check=True, executable="/bin/bash")
     return createDownloadGrid()
-
-@app.route('/scanfunctionTiffHighRes', methods=['POST'])
-def scan_function_highRes():
-    app.logger.info(request.get_json().get('type'))
-    file_name = request.get_json().get('filename')
-    subprocess.run(f'scanRessources/scanTiffHighRes.sh {file_name}', capture_output=True, text=True, shell=True, check=True, executable="/bin/bash")
-    return createDownloadGrid()
-
-
 
 @app.route('/reload', methods=['POST'])
 def createDownloadGrid():
@@ -51,7 +36,6 @@ def createDownloadCardForPdf(path: str):
     return f"""<article>
             <header>{file_name}</header>
             <button role="button" class="secondary" onclick="download(\'{path}\')">Download</button>
-            <button role="button" class="secondary" onclick="downloadHighRes(\'{path}\')">DownloadHighRes</button>
             <button role="button" class="outline contrary" onclick="deleteFile(\'{path}\')">Delete</button>
             </article>"""
 
@@ -68,38 +52,6 @@ def download():
         return send_file(filepath, as_attachment=True)
     except Exception as e:
         app.logger.error(f"Download error: {str(e)}")
-        return str(e), 500
-
-@app.route('/downloadHighRes', methods=['POST'])
-def downloadHighRes():
-    try:
-        filepath = request.get_json().get('filepath')
-        app.logger.info(f"Starting high-res download for: {filepath}")
-        
-        if not os.path.exists(filepath):
-            app.logger.error(f"File not found: {filepath}")
-            return "File not found", 404
-
-        def generate():
-            try:
-                with open(filepath, 'rb') as f:
-                    while True:
-                        chunk = f.read(8192)
-                        if not chunk:
-                            break
-                        yield chunk
-            except Exception as e:
-                app.logger.error(f"Streaming error: {str(e)}")
-                raise
-
-        app.logger.info(f"Starting stream for: {filepath}")
-        return Response(
-            generate(),
-            mimetype='application/octet-stream',
-            headers={'Content-Disposition': f'attachment; filename={os.path.basename(filepath)}'}
-        )
-    except Exception as e:
-        app.logger.error(f"High-res download error: {str(e)}")
         return str(e), 500
 
 @app.route('/deleteFile', methods=['POST'])
