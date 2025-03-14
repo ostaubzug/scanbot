@@ -257,10 +257,26 @@ def add_page():
             app.logger.info("Removing new PDF")
             os.remove(new_pdf)
             
-            app.logger.info("Generating download grid HTML")
-            html = generate_download_grid()
-            app.logger.info("Returning success response")
-            return jsonify({"html": html, "success": True})
+            # Add retry mechanism for file system synchronization
+            max_retries = 3
+            retry_delay = 0.1  # 100ms
+            
+            for attempt in range(max_retries):
+                app.logger.info(f"Generating download grid HTML (attempt {attempt + 1})")
+                html = generate_download_grid()
+                
+                if html.strip():  # If we got non-empty HTML
+                    app.logger.info("Returning success response with HTML")
+                    return jsonify({"html": html, "success": True})
+                    
+                if attempt < max_retries - 1:  # Don't sleep on last attempt
+                    import time
+                    time.sleep(retry_delay)
+                    app.logger.info("Retrying after delay...")
+            
+            # If we get here, all retries failed
+            app.logger.error("Failed to generate non-empty HTML after all retries")
+            return jsonify({"error": "Failed to update file list after merge"}), 500
             
         except Exception as e:
             app.logger.error(f"Error during PDF merge: {str(e)}")
