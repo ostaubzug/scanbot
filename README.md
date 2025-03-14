@@ -18,6 +18,7 @@ Once the container is running, access the web interface at:
 ```
 http://localhost:5400
 ```
+
 ## System Compatibility
 
 This project is primarily designed for Linux/Unix systems as it relies on SANE (Scanner Access Now Easy) for scanner communication.

@@ -63,8 +63,8 @@ def scan_function():
             app.logger.error(f"PDF file not created at expected path: {expected_pdf}")
             return jsonify({"error": "Failed to create PDF file. Please check scanner connection and try again."}), 500
             
-        grid_html = createDownloadGrid()
-        return jsonify({"html": grid_html, "success": True})
+        html = generate_download_grid()
+        return jsonify({"html": html, "success": True})
         
     except subprocess.CalledProcessError as e:
         if "scanimage: no SANE devices found" in e.stderr:
@@ -82,13 +82,16 @@ def scan_function():
         return jsonify({"error": "An unexpected error occurred"}), 500
 
 @app.route('/reload', methods=['POST'])
-def createDownloadGrid():
+def reload_grid():
+    html = generate_download_grid()
+    return jsonify({"html": html, "success": True})
+    
+def generate_download_grid():
     pdf_files = [file for file in glob.glob("scanRessources/*.*") if not file.endswith('.sh')]
     html = ""
     for file in pdf_files:
         html += createDownloadCardForPdf(file)
-    return jsonify({"html": html, "success": True})
-    
+    return html
 
 def createDownloadCardForPdf(path: str):
     file_name = path.split('/')[1]
@@ -97,7 +100,6 @@ def createDownloadCardForPdf(path: str):
             <button role="button" class="secondary" onclick="download(\'{path}\')">Download</button>
             <button role="button" class="outline contrary" onclick="deleteFile(\'{path}\')">Delete</button>
             </article>"""
-
 
 @app.route('/download', methods=['POST'])
 def download():
@@ -120,8 +122,8 @@ def delete():
         if not os.path.exists(filepath):
             return jsonify({"error": "File not found"}), 404
         os.remove(filepath)
-        grid_html = createDownloadGrid()
-        return jsonify({"html": grid_html, "success": True})
+        html = generate_download_grid()
+        return jsonify({"html": html, "success": True})
     except Exception as e:
         app.logger.error(f"Delete error: {str(e)}")
         return jsonify({"error": f"Failed to delete file: {str(e)}"}), 500
@@ -188,8 +190,8 @@ def add_page():
         # Clean up temporary new page
         os.remove(new_pdf)
         
-        grid_html = createDownloadGrid()
-        return jsonify({"html": grid_html, "success": True})
+        html = generate_download_grid()
+        return jsonify({"html": html, "success": True})
         
     except subprocess.CalledProcessError as e:
         if "scanimage: no SANE devices found" in e.stderr:
