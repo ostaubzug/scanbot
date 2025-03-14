@@ -3,7 +3,7 @@ from flask import Response
 import time, glob, os
 from flask import Flask, render_template, request, jsonify, send_file
 import stat
-from PyPDF2 import PdfMerger
+from PyPDF2 import PdfMerger, PdfReader
 
 app = Flask(__name__)
 
@@ -98,11 +98,21 @@ def generate_download_grid():
 
 def createDownloadCardForPdf(path: str):
     file_name = path.split('/')[1]
-    return f"""<article>
+    return f"""<article data-file="{path}">
             <header>{file_name}</header>
-            <button role="button" class="secondary" onclick="download(\'{path}\')">Download</button>
-            <button role="button" class="outline" onclick="addPage(\'{path}\')">Add Page</button>
-            <button role="button" class="outline contrary" onclick="deleteFile(\'{path}\')">Delete</button>
+            <div class="document-actions">
+                <button role="button" class="secondary" onclick="download('{path}')">Download</button>
+                <button role="button" class="outline contrary" onclick="deleteFile('{path}')">Delete</button>
+            </div>
+            <div class="add-page-section">
+                <input
+                    type="text"
+                    class="add-page-input"
+                    placeholder="Enter filename for new page"
+                    aria-label="New page filename"
+                />
+                <button role="button" class="outline" onclick="addPage('{path}')">Add Page</button>
+            </div>
             </article>"""
 
 @app.route('/download', methods=['POST'])
@@ -239,6 +249,7 @@ def scan_document(filename: str) -> str:
 def merge_pdfs(original_file: str, new_file: str, temp_file: str) -> None:
     """
     Merge two PDF files and save to a temporary file.
+    The new file will be appended to the original file.
     
     Args:
         original_file: Path to the original PDF
@@ -252,14 +263,28 @@ def merge_pdfs(original_file: str, new_file: str, temp_file: str) -> None:
     
     merger = PdfMerger()
     try:
+        # First append the original file
         merger.append(original_file)
+        # Then append the new file (this will be the second page)
         merger.append(new_file)
+        # Write to temporary file
         merger.write(temp_file)
     finally:
         merger.close()
     
+    # Verify the merged file exists and has content
     if not os.path.exists(temp_file) or os.path.getsize(temp_file) == 0:
         raise Exception("Merged file is empty or does not exist")
+        
+    # Verify the merged file has the correct number of pages
+    try:
+        with open(temp_file, 'rb') as f:
+            pdf = PdfReader(f)
+            if len(pdf.pages) != 2:
+                raise Exception(f"Expected 2 pages in merged file, got {len(pdf.pages)}")
+    except Exception as e:
+        app.logger.error(f"Error verifying merged PDF: {str(e)}")
+        raise Exception("Failed to verify merged PDF structure")
 
 def cleanup_files(files_to_remove: list[str]) -> None:
     """

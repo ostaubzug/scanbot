@@ -18,6 +18,22 @@
         border-radius: 0.25rem;
         display: none;
       }
+      .document-card {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .document-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      .add-page-section {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        margin-top: 0.5rem;
+      }
     </style>
   </head>
   <body>
@@ -213,7 +229,10 @@
       }
 
       async function addPage(originalFile) {
-        let newFilename = document.getElementById("filename").value;
+        const card = document.querySelector(`[data-file="${originalFile}"]`);
+        const filenameInput = card.querySelector(".add-page-input");
+        const newFilename = filenameInput.value;
+
         if (!newFilename) {
           showError("Please enter a filename for the new page");
           return;
