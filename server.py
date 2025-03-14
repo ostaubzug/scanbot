@@ -212,10 +212,13 @@ def add_page():
         original_file = data.get('original_file')
         new_filename = data.get('new_filename')
         
+        app.logger.info(f"Starting add_page with original_file: {original_file}, new_filename: {new_filename}")
+        
         if not original_file or not new_filename:
             return jsonify({"error": "Both original file and new filename are required"}), 400
         
         new_filename = new_filename.rstrip('.pdf')
+        app.logger.info(f"Running scan for new page with filename: {new_filename}")
             
         result = subprocess.run(f'scanRessources/scanDocument.sh {new_filename}', 
                               capture_output=True, 
@@ -225,28 +228,40 @@ def add_page():
                               executable="/bin/bash")
                               
         new_pdf = f"scanRessources/{new_filename}.pdf"
+        app.logger.info(f"Scan complete, checking for new PDF at: {new_pdf}")
         
         if not os.path.exists(new_pdf):
+            app.logger.error(f"New PDF file not found at: {new_pdf}")
             return jsonify({"error": "Failed to create new page"}), 500
 
         merged_temp = f"scanRessources/temp_merged_{new_filename}.pdf"
+        app.logger.info(f"Starting PDF merge process with temp file: {merged_temp}")
         
         try:
             merger = PdfMerger()
+            app.logger.info("Appending original file")
             merger.append(original_file)
+            app.logger.info("Appending new file")
             merger.append(new_pdf)
+            app.logger.info("Writing merged file")
             merger.write(merged_temp)
             merger.close()
             
+            app.logger.info("Removing original file")
             os.remove(original_file)
+            app.logger.info("Renaming temp file to original")
             os.rename(merged_temp, original_file)
             
+            app.logger.info("Removing new PDF")
             os.remove(new_pdf)
             
+            app.logger.info("Generating download grid HTML")
             html = generate_download_grid()
+            app.logger.info("Returning success response")
             return jsonify({"html": html, "success": True})
             
         except Exception as e:
+            app.logger.error(f"Error during PDF merge: {str(e)}")
             if os.path.exists(merged_temp):
                 os.remove(merged_temp)
             if os.path.exists(new_pdf):
@@ -254,6 +269,7 @@ def add_page():
             raise e
             
     except subprocess.CalledProcessError as e:
+        app.logger.error(f"Scanner error: {e.stderr}")
         if "scanimage: no SANE devices found" in e.stderr:
             return jsonify({"error": "No scanner found. Please check if your scanner is connected."}), 400
         elif "scanimage: open of device" in e.stderr:

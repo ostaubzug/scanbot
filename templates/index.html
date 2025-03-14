@@ -47,7 +47,7 @@
     <script>
       window.addEventListener("load", function () {
         reload();
-      
+
         const savedGrid = localStorage.getItem("downloadGridState");
         if (savedGrid) {
           const serverResponse =
@@ -220,7 +220,10 @@
           return;
         }
 
-        // First check if the original file exists
+        console.log(
+          `Starting add page process for ${originalFile} with new page ${newFilename}`
+        );
+
         try {
           const checkResponse = await fetch("/check_file", {
             method: "post",
@@ -233,6 +236,7 @@
           });
 
           const checkData = await checkResponse.json();
+          console.log("Check file response:", checkData);
 
           if (!checkData.exists) {
             showError(
@@ -245,6 +249,7 @@
           document.getElementById("progress").style.visibility = "visible";
           document.getElementById("error-message").style.display = "none";
 
+          console.log("Sending add_page request");
           const response = await fetch("/add_page", {
             method: "post",
             headers: {
@@ -256,16 +261,27 @@
             }),
           });
 
+          console.log("Received add_page response:", response.status);
           const data = await response.json();
+          console.log("Add page response data:", data);
+
           if (!response.ok) {
             throw new Error(
               data.error || "An error occurred while adding page"
             );
           }
 
+          if (!data.html) {
+            console.error("No HTML content in response");
+            throw new Error("Server response missing HTML content");
+          }
+
+          console.log("Updating download grid");
           document.getElementById("downloadGrid").innerHTML = data.html;
+          console.log("Saving state");
           saveState();
         } catch (error) {
+          console.error("Error in addPage:", error);
           showError(error.message);
         } finally {
           document.getElementById("progress").style.visibility = "hidden";
