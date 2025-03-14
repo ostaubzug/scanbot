@@ -15,7 +15,7 @@ RUN pip install jsonify
 RUN pip install flask
 
 COPY server.py ./
-COPY templates/index.html  templates/
+COPY templates/  templates/
 COPY static static/
 COPY scanRessources/scanDocument.sh scanRessources/
 

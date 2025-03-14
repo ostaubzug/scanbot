@@ -11,6 +11,29 @@ script_path = 'scanRessources/scanDocument.sh'
 st = os.stat(script_path)
 os.chmod(script_path, st.st_mode | stat.S_IEXEC)
 
+selected_scanner = None
+
+def get_available_scanners():
+    try:
+        result = subprocess.run(['scanimage', '-L'], 
+                              capture_output=True, 
+                              text=True, 
+                              check=True)
+        scanners = []
+        for line in result.stdout.split('\n'):
+            if line.strip():
+                # Extract device name from the output
+                device = line.split('`')[1].split("'")[0] if '`' in line else None
+                if device:
+                    scanners.append({
+                        'device': device,
+                        'description': line
+                    })
+        return scanners
+    except subprocess.CalledProcessError as e:
+        app.logger.error(f"Error getting scanners: {e.stderr}")
+        return []
+
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -34,7 +57,6 @@ def scan_function():
             app.logger.error("No scanner found")
             return jsonify({"error": "No scanner found. Please check if your scanner is connected."}), 400
             
-        # Check if the PDF file was actually created
         expected_pdf = f"scanRessources/{file_name}.pdf"
         if not os.path.exists(expected_pdf):
             app.logger.error(f"PDF file not created at expected path: {expected_pdf}")
@@ -102,6 +124,33 @@ def delete():
     except Exception as e:
         app.logger.error(f"Delete error: {str(e)}")
         return jsonify({"error": f"Failed to delete file: {str(e)}"}), 500
+
+@app.route('/settings')
+def settings():
+    return render_template('settings.html')
+
+@app.route('/api/scanners', methods=['GET'])
+def list_scanners():
+    scanners = get_available_scanners()
+    return jsonify({
+        'scanners': scanners,
+        'selected_scanner': selected_scanner
+    })
+
+@app.route('/api/scanner', methods=['POST'])
+def set_scanner():
+    global selected_scanner
+    data = request.get_json()
+    selected_scanner = data.get('device')
+    
+    try:
+        with open('scanRessources/scanner_config', 'w') as f:
+            f.write(selected_scanner)
+    except Exception as e:
+        app.logger.error(f"Failed to save scanner configuration: {e}")
+        return jsonify({'error': 'Failed to save scanner configuration'}), 500
+        
+    return jsonify({'success': True, 'selected_scanner': selected_scanner})
 
 if __name__ == '__main__':
      app.run(host='0.0.0.0', port=5400, debug=True)

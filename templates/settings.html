@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <title>Scanbot - Settings</title>
+    <style>
+      .scanner-list {
+        margin: 2rem 0;
+      }
+      .scanner-item {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      .scanner-item.selected {
+        border-color: #1095c1;
+        background-color: #f0f9ff;
+      }
+      .error-message {
+        color: #842029;
+        background-color: #f8d7da;
+        border: 1px solid #f5c2c7;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-radius: 0.25rem;
+        display: none;
+      }
+      .success-message {
+        color: #0f5132;
+        background-color: #d1e7dd;
+        border: 1px solid #badbcc;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-radius: 0.25rem;
+        display: none;
+      }
+      nav {
+        margin-bottom: 2rem;
+      }
+      .search-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+      #search-progress {
+        flex: 1;
+        display: none;
+      }
+      .searching-text {
+        color: #666;
+        margin-left: 1rem;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <nav>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><strong>Settings</strong></li>
+        </ul>
+      </nav>
+
+      <h1>Scanner Settings</h1>
+
+      <div class="grid">
+        <div>
+          <div class="search-container">
+            <button onclick="scanForDevices()" role="button" id="scan-button">
+              Scan for Devices
+            </button>
+            <progress id="search-progress" indeterminate></progress>
+            <span class="searching-text" id="searching-text"
+              >Searching for scanners...</span
+            >
+          </div>
+          <div id="error-message" class="error-message"></div>
+          <div id="success-message" class="success-message"></div>
+          <div id="scanner-list" class="scanner-list">
+            <p>Click "Scan for Devices" to find available scanners.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      function showError(message) {
+        const errorDiv = document.getElementById("error-message");
+        errorDiv.textContent = message;
+        errorDiv.style.display = "block";
+        setTimeout(() => {
+          errorDiv.style.display = "none";
+        }, 5000);
+      }
+
+      function showSuccess(message) {
+        const successDiv = document.getElementById("success-message");
+        successDiv.textContent = message;
+        successDiv.style.display = "block";
+        setTimeout(() => {
+          successDiv.style.display = "none";
+        }, 5000);
+      }
+
+      function setSearching(isSearching) {
+        const progress = document.getElementById("search-progress");
+        const searchingText = document.getElementById("searching-text");
+        const scanButton = document.getElementById("scan-button");
+
+        progress.style.display = isSearching ? "block" : "none";
+        searchingText.style.display = isSearching ? "block" : "none";
+        scanButton.disabled = isSearching;
+        scanButton.setAttribute("aria-busy", isSearching);
+      }
+
+      async function scanForDevices() {
+        try {
+          setSearching(true);
+          const response = await fetch("/api/scanners");
+          const data = await response.json();
+
+          const scannerList = document.getElementById("scanner-list");
+          if (data.scanners.length === 0) {
+            scannerList.innerHTML =
+              "<p>No scanners found. Make sure your scanner is connected and powered on.</p>";
+            return;
+          }
+
+          scannerList.innerHTML = data.scanners
+            .map(
+              (scanner) => `
+                    <div class="scanner-item ${
+                      scanner.device === data.selected_scanner ? "selected" : ""
+                    }">
+                        <p>${scanner.description}</p>
+                        <button onclick="selectScanner('${
+                          scanner.device
+                        }')" role="button" class="outline">
+                            ${
+                              scanner.device === data.selected_scanner
+                                ? "Selected"
+                                : "Select Scanner"
+                            }
+                        </button>
+                    </div>
+                `
+            )
+            .join("");
+        } catch (error) {
+          showError("Failed to scan for devices. Please try again.");
+          console.error("Error:", error);
+        } finally {
+          setSearching(false);
+        }
+      }
+
+      async function selectScanner(device) {
+        try {
+          const response = await fetch("/api/scanner", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ device }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to set scanner");
+          }
+
+          showSuccess("Scanner selected successfully");
+          await scanForDevices(); // Refresh the list to show the selection
+        } catch (error) {
+          showError("Failed to select scanner. Please try again.");
+          console.error("Error:", error);
+        }
+      }
+
+      // Scan for devices when the page loads
+      window.addEventListener("load", scanForDevices);
+    </script>
+  </body>
+</html>
