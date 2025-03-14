@@ -228,18 +228,31 @@ def add_page():
         
         if not os.path.exists(new_pdf):
             return jsonify({"error": "Failed to create new page"}), 500
-        merger = PdfMerger()
-        merger.append(original_file)
-        merger.append(new_pdf)
+
+        merged_temp = f"scanRessources/temp_merged_{new_filename}.pdf"
         
-        merger.write(original_file)
-        merger.close()
-        
-        os.remove(new_pdf)
-        
-        html = generate_download_grid()
-        return jsonify({"html": html, "success": True})
-        
+        try:
+            merger = PdfMerger()
+            merger.append(original_file)
+            merger.append(new_pdf)
+            merger.write(merged_temp)
+            merger.close()
+            
+            os.remove(original_file)
+            os.rename(merged_temp, original_file)
+            
+            os.remove(new_pdf)
+            
+            html = generate_download_grid()
+            return jsonify({"html": html, "success": True})
+            
+        except Exception as e:
+            if os.path.exists(merged_temp):
+                os.remove(merged_temp)
+            if os.path.exists(new_pdf):
+                os.remove(new_pdf)
+            raise e
+            
     except subprocess.CalledProcessError as e:
         if "scanimage: no SANE devices found" in e.stderr:
             return jsonify({"error": "No scanner found. Please check if your scanner is connected."}), 400
