@@ -17,10 +17,21 @@
         margin-bottom: 1rem;
         border: 1px solid #ccc;
         border-radius: 4px;
+        transition: all 0.2s ease-in-out;
       }
       .scanner-item.selected {
         border-color: #1095c1;
-        background-color: #f0f9ff;
+        background-color: #e6f7ff;
+        box-shadow: 0 2px 8px rgba(16, 149, 193, 0.15);
+      }
+      .scanner-item.selected p {
+        font-weight: 500;
+        color: #0a6b8a;
+      }
+      .scanner-item.selected button {
+        background-color: #1095c1;
+        color: white;
+        border-color: #1095c1;
       }
       .error-message {
         color: #842029;
@@ -168,7 +179,9 @@
                         <p>${scanner.description}</p>
                         <button onclick="selectScanner('${
                           scanner.device
-                        }')" role="button" class="outline">
+                        }')" role="button" class="${
+                scanner.device === data.selected_scanner ? "" : "outline"
+              }">
                             ${
                               scanner.device === data.selected_scanner
                                 ? "Selected"
@@ -211,10 +224,14 @@
                 .includes(device)
             ) {
               item.classList.add("selected");
-              item.querySelector("button").textContent = "Selected";
+              const button = item.querySelector("button");
+              button.textContent = "Selected";
+              button.classList.remove("outline");
             } else {
               item.classList.remove("selected");
-              item.querySelector("button").textContent = "Select Scanner";
+              const button = item.querySelector("button");
+              button.textContent = "Select Scanner";
+              button.classList.add("outline");
             }
           });
         } catch (error) {
@@ -245,7 +262,6 @@
         }
       }
 
-      // Load saved DPI setting
       async function loadDpiSetting() {
         try {
           const response = await fetch("/api/dpi");
@@ -260,9 +276,23 @@
         }
       }
 
-      // Initialize page
+      async function loadSavedScanner() {
+        try {
+          const response = await fetch("/api/scanner");
+          if (response.ok) {
+            const data = await response.json();
+            if (data.selected_scanner) {
+              console.log("Loaded saved scanner:", data.selected_scanner);
+            }
+          }
+        } catch (error) {
+          console.error("Error loading saved scanner:", error);
+        }
+      }
+
       window.addEventListener("load", async () => {
-        await scanForDevices();
+        await loadSavedScanner(); // First load the saved scanner
+        await scanForDevices(); // Then scan for devices (will highlight the selected scanner)
         await loadDpiSetting();
       });
     </script>

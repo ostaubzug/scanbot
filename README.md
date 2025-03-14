@@ -10,7 +10,7 @@ Pull and run the Docker image:
 
 ```bash
 docker pull oli1115/scanbot:latest
-docker run -d --name ScanBot -p 5400:5400 --privileged --restart=always --network host -v /var/run/dbus:/var/run/dbus -v /dev/bus/usb:/dev/bus/usb oli1115/scanbot:latest
+docker run -d --name ScanBot --privileged --restart=always --network host -v /var/run/dbus:/var/run/dbus -v /dev/bus/usb:/dev/bus/usb oli1115/scanbot:latest
 ```
 
 Once the container is running, access the web interface at:
