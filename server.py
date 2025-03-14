@@ -91,9 +91,11 @@ def reload_grid():
     
 def generate_download_grid():
     pdf_files = [file for file in glob.glob("scanRessources/*.*") if not file.endswith('.sh')]
+    app.logger.info(f"Found PDF files: {pdf_files}")
     html = ""
     for file in pdf_files:
         html += createDownloadCardForPdf(file)
+    app.logger.info(f"Generated HTML: {html}")
     return html
 
 def createDownloadCardForPdf(path: str):

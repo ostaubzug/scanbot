@@ -271,13 +271,18 @@
             );
           }
 
-          if (!data.html) {
-            console.error("No HTML content in response");
+          if (!data.html && data.html !== "") {
+            console.error("Response data:", data);
             throw new Error("Server response missing HTML content");
           }
 
-          console.log("Updating download grid");
-          document.getElementById("downloadGrid").innerHTML = data.html;
+          console.log("Updating download grid with HTML:", data.html);
+          const downloadGrid = document.getElementById("downloadGrid");
+          downloadGrid.innerHTML = data.html;
+          console.log(
+            "Download grid updated, current content:",
+            downloadGrid.innerHTML
+          );
           console.log("Saving state");
           saveState();
         } catch (error) {
