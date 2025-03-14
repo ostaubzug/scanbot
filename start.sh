@@ -9,4 +9,7 @@ sudo docker run -d \
     -p 5400:5400 \
     --privileged \
     --restart=always \
+    --network host \
+    -v /var/run/dbus:/var/run/dbus \
+    -v /dev/bus/usb:/dev/bus/usb \
     scanbot:local
