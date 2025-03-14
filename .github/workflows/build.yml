@@ -33,7 +33,9 @@ jobs:
         run: npm ci
 
       - name: Build SASS
-        run: npx sass static/custom.scss static/styles.css
+        working-directory: .
+        run: |
+          npx sass static/custom.scss static/styles.css --load-path=node_modules
 
       - name: Check Python syntax
         run: |
