@@ -162,7 +162,6 @@
           console.log(`Starting download: ${file}`);
           document.getElementById("progress").style.visibility = "visible";
 
-          // First check if the file exists
           const checkResponse = await fetch("/check_file", {
             method: "post",
             headers: {

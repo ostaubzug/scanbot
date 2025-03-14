@@ -7,7 +7,6 @@ from PyPDF2 import PdfMerger
 
 app = Flask(__name__)
 
-# Add execute permission to the script
 script_path = 'scanRessources/scanDocument.sh'
 st = os.stat(script_path)
 os.chmod(script_path, st.st_mode | stat.S_IEXEC)
@@ -46,7 +45,6 @@ def scan_function():
     if not file_name:
         return jsonify({"error": "Filename is required"}), 400
     
-    # Remove .pdf extension if present to avoid creating file.pdf.pdf
     file_name = file_name.rstrip('.pdf')
         
     try:
@@ -169,7 +167,7 @@ def get_scanner():
         if os.path.exists('scanRessources/scanner_config'):
             with open('scanRessources/scanner_config', 'r') as f:
                 selected_scanner = f.read().strip()
-                if selected_scanner:  # Only return if we have a valid scanner
+                if selected_scanner:
                     return jsonify({'selected_scanner': selected_scanner})
     except Exception as e:
         app.logger.error(f"Failed to read scanner configuration: {e}")
@@ -241,41 +239,35 @@ def add_page():
         
         try:
             merger = PdfMerger()
-            app.logger.info("Appending original file")
             merger.append(original_file)
-            app.logger.info("Appending new file")
             merger.append(new_pdf)
-            app.logger.info("Writing merged file")
             merger.write(merged_temp)
             merger.close()
             
-            app.logger.info("Removing original file")
             os.remove(original_file)
-            app.logger.info("Renaming temp file to original")
             os.rename(merged_temp, original_file)
-            
-            app.logger.info("Removing new PDF")
             os.remove(new_pdf)
             
-            # Add retry mechanism for file system synchronization
-            max_retries = 3
-            retry_delay = 0.1  # 100ms
+            max_retries = 5
+            retry_delay = 0.5
             
             for attempt in range(max_retries):
                 app.logger.info(f"Generating download grid HTML (attempt {attempt + 1})")
-                html = generate_download_grid()
                 
-                if html.strip():  # If we got non-empty HTML
-                    app.logger.info("Returning success response with HTML")
-                    return jsonify({"html": html, "success": True})
-                    
-                if attempt < max_retries - 1:  # Don't sleep on last attempt
-                    import time
+                if os.path.exists(original_file):
+                    html = generate_download_grid()
+                    if html.strip():
+                        app.logger.info("Returning success response with HTML")
+                        return jsonify({"html": html, "success": True})
+                
+                if attempt < max_retries - 1:
                     time.sleep(retry_delay)
                     app.logger.info("Retrying after delay...")
             
-            # If we get here, all retries failed
             app.logger.error("Failed to generate non-empty HTML after all retries")
+            if not os.path.exists(original_file):
+                app.logger.error(f"Original file {original_file} not found after merge")
+                return jsonify({"error": "Failed to locate merged file"}), 500
             return jsonify({"error": "Failed to update file list after merge"}), 500
             
         except Exception as e:
