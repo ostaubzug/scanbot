@@ -205,78 +205,153 @@ def set_dpi():
         
     return jsonify({'success': True, 'dpi': selected_dpi})
 
+def scan_document(filename: str) -> str:
+    """
+    Scan a document and return the path to the created PDF.
+    
+    Args:
+        filename: The name of the file to create (without .pdf extension)
+        
+    Returns:
+        str: Path to the created PDF file
+        
+    Raises:
+        subprocess.CalledProcessError: If scanning fails
+        FileNotFoundError: If the PDF is not created after scanning
+    """
+    app.logger.info(f"Running scan for new page with filename: {filename}")
+    
+    result = subprocess.run(
+        f'scanRessources/scanDocument.sh {filename}',
+        capture_output=True,
+        text=True,
+        shell=True,
+        check=True,
+        executable="/bin/bash"
+    )
+    
+    pdf_path = f"scanRessources/{filename}.pdf"
+    if not os.path.exists(pdf_path):
+        raise FileNotFoundError(f"PDF file not created at: {pdf_path}")
+        
+    return pdf_path
+
+def merge_pdfs(original_file: str, new_file: str, temp_file: str) -> None:
+    """
+    Merge two PDF files and save to a temporary file.
+    
+    Args:
+        original_file: Path to the original PDF
+        new_file: Path to the new PDF to append
+        temp_file: Path to save the merged PDF temporarily
+        
+    Raises:
+        Exception: If merge fails or resulting file is invalid
+    """
+    app.logger.info(f"Starting PDF merge process with temp file: {temp_file}")
+    
+    merger = PdfMerger()
+    try:
+        merger.append(original_file)
+        merger.append(new_file)
+        merger.write(temp_file)
+    finally:
+        merger.close()
+    
+    if not os.path.exists(temp_file) or os.path.getsize(temp_file) == 0:
+        raise Exception("Merged file is empty or does not exist")
+
+def cleanup_files(files_to_remove: list[str]) -> None:
+    """
+    Remove a list of files, logging any errors but continuing.
+    
+    Args:
+        files_to_remove: List of file paths to remove
+    """
+    for file_path in files_to_remove:
+        try:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        except Exception as e:
+            app.logger.warning(f"Failed to remove file {file_path}: {str(e)}")
+
+def verify_file_exists(file_path: str, description: str) -> None:
+    """
+    Verify that a file exists, raising an appropriate error if not.
+    
+    Args:
+        file_path: Path to the file to check
+        description: Description of the file for error messages
+        
+    Raises:
+        FileNotFoundError: If the file does not exist
+    """
+    if not os.path.exists(file_path):
+        error_msg = f"{description} not found at: {file_path}"
+        app.logger.error(error_msg)
+        raise FileNotFoundError(error_msg)
+
 @app.route('/add_page', methods=['POST'])
 def add_page():
+    """
+    Add a new page to an existing PDF document.
+    
+    Request body:
+        original_file: Path to the original PDF
+        new_filename: Name for the new page (without .pdf extension)
+        
+    Returns:
+        JSON response with updated HTML grid or error message
+    """
     try:
+        # Validate input
         data = request.get_json()
         original_file = data.get('original_file')
         new_filename = data.get('new_filename')
-        
-        app.logger.info(f"Starting add_page with original_file: {original_file}, new_filename: {new_filename}")
         
         if not original_file or not new_filename:
             return jsonify({"error": "Both original file and new filename are required"}), 400
         
         new_filename = new_filename.rstrip('.pdf')
-        app.logger.info(f"Running scan for new page with filename: {new_filename}")
-            
-        result = subprocess.run(f'scanRessources/scanDocument.sh {new_filename}', 
-                              capture_output=True, 
-                              text=True, 
-                              shell=True, 
-                              check=True, 
-                              executable="/bin/bash")
-                              
-        new_pdf = f"scanRessources/{new_filename}.pdf"
-        app.logger.info(f"Scan complete, checking for new PDF at: {new_pdf}")
+        app.logger.info(f"Starting add_page with original_file: {original_file}, new_filename: {new_filename}")
         
-        if not os.path.exists(new_pdf):
-            app.logger.error(f"New PDF file not found at: {new_pdf}")
-            return jsonify({"error": "Failed to create new page"}), 500
-
+        # Verify original file exists
+        verify_file_exists(original_file, "Original file")
+        
+        # Scan new page
+        new_pdf = scan_document(new_filename)
+        
+        # Prepare for merge
         merged_temp = f"scanRessources/temp_merged_{new_filename}.pdf"
-        app.logger.info(f"Starting PDF merge process with temp file: {merged_temp}")
+        files_to_cleanup = [new_pdf]
         
         try:
-            merger = PdfMerger()
-            merger.append(original_file)
-            merger.append(new_pdf)
-            merger.write(merged_temp)
-            merger.close()
+            # Merge PDFs
+            merge_pdfs(original_file, new_pdf, merged_temp)
+            files_to_cleanup.append(merged_temp)
             
-            os.remove(original_file)
+            # Remove original and new files
+            cleanup_files([original_file, new_pdf])
+            
+            # Rename merged file to original name
             os.rename(merged_temp, original_file)
-            os.remove(new_pdf)
+            files_to_cleanup.remove(merged_temp)
             
-            max_retries = 5
-            retry_delay = 0.5
+            # Verify final file
+            verify_file_exists(original_file, "Final merged file")
             
-            for attempt in range(max_retries):
-                app.logger.info(f"Generating download grid HTML (attempt {attempt + 1})")
-                
-                if os.path.exists(original_file):
-                    html = generate_download_grid()
-                    if html.strip():
-                        app.logger.info("Returning success response with HTML")
-                        return jsonify({"html": html, "success": True})
-                
-                if attempt < max_retries - 1:
-                    time.sleep(retry_delay)
-                    app.logger.info("Retrying after delay...")
+            # Generate response
+            html = generate_download_grid()
+            if not html.strip():
+                raise Exception("Failed to generate HTML for updated file list")
             
-            app.logger.error("Failed to generate non-empty HTML after all retries")
-            if not os.path.exists(original_file):
-                app.logger.error(f"Original file {original_file} not found after merge")
-                return jsonify({"error": "Failed to locate merged file"}), 500
-            return jsonify({"error": "Failed to update file list after merge"}), 500
+            app.logger.info("Successfully completed PDF merge and file updates")
+            return jsonify({"html": html, "success": True})
             
         except Exception as e:
             app.logger.error(f"Error during PDF merge: {str(e)}")
-            if os.path.exists(merged_temp):
-                os.remove(merged_temp)
-            if os.path.exists(new_pdf):
-                os.remove(new_pdf)
-            raise e
+            cleanup_files(files_to_cleanup)
+            raise
             
     except subprocess.CalledProcessError as e:
         app.logger.error(f"Scanner error: {e.stderr}")
@@ -287,6 +362,9 @@ def add_page():
         else:
             return jsonify({"error": f"Scanner error: {e.stderr}"}), 400
             
+    except FileNotFoundError as e:
+        return jsonify({"error": str(e)}), 404
+        
     except Exception as e:
         app.logger.error(f"Error adding page: {str(e)}")
         return jsonify({"error": f"Failed to add page: {str(e)}"}), 500

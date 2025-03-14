@@ -93,9 +93,6 @@
               Scan for Devices
             </button>
             <progress id="search-progress" indeterminate></progress>
-            <span class="searching-text" id="searching-text"
-              >Searching for scanners...</span
-            >
           </div>
           <div id="error-message" class="error-message"></div>
           <div id="success-message" class="success-message"></div>
@@ -145,11 +142,9 @@
 
       function setSearching(isSearching) {
         const progress = document.getElementById("search-progress");
-        const searchingText = document.getElementById("searching-text");
         const scanButton = document.getElementById("scan-button");
 
         progress.style.display = isSearching ? "block" : "none";
-        searchingText.style.display = isSearching ? "block" : "none";
         scanButton.disabled = isSearching;
         scanButton.setAttribute("aria-busy", isSearching);
       }
