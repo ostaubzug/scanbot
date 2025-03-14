@@ -18,17 +18,6 @@ Once the container is running, access the web interface at:
 ```
 http://localhost:5400
 ```
-
-## Development
-
-### Building Locally
-
-To build the Docker image locally:
-
-```bash
-docker build -t scanbot:local .
-```
-
 ## System Compatibility
 
 This project is primarily designed for Linux/Unix systems as it relies on SANE (Scanner Access Now Easy) for scanner communication.
