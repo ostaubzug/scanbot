@@ -29,6 +29,10 @@
         flex-wrap: wrap;
         margin-top: 0.5rem;
       }
+      .document-progress {
+        margin-top: 0.5rem;
+        visibility: hidden;
+      }
     </style>
   </head>
   <body>
@@ -226,6 +230,11 @@
       async function addPage(originalFile) {
         console.log(`Starting add page process for ${originalFile}`);
 
+        // Get the card and show its progress indicator
+        const card = document.querySelector(`[data-file="${originalFile}"]`);
+        const progressBar = card.querySelector(".document-progress");
+        progressBar.style.visibility = "visible";
+
         try {
           const checkResponse = await fetch("/check_file", {
             method: "post",
@@ -248,7 +257,6 @@
             return;
           }
 
-          document.getElementById("progress").style.visibility = "visible";
           document.getElementById("error-message").style.display = "none";
 
           console.log("Sending add_page request");
@@ -290,7 +298,10 @@
           console.error("Error in addPage:", error);
           showError(error.message);
         } finally {
-          document.getElementById("progress").style.visibility = "hidden";
+          // Hide the progress indicator (may not be in DOM if updated)
+          if (document.contains(progressBar)) {
+            progressBar.style.visibility = "hidden";
+          }
         }
       }
     </script>

@@ -106,6 +106,7 @@ def createDownloadCardForPdf(path: str):
                 <button role="button" class="outline" onclick="addPage('{path}')">Add Page</button>
                 <button role="button" class="outline contrary" onclick="deleteFile('{path}')">Delete</button>
             </div>
+            <progress class="document-progress" style="visibility: hidden"></progress>
             </article>"""
 
 @app.route('/download', methods=['POST'])
@@ -254,11 +255,26 @@ def merge_pdfs(original_file: str, new_file: str, temp_file: str) -> None:
     """
     app.logger.info(f"Starting PDF merge process with temp file: {temp_file}")
     
+    # Get the number of pages in the original file
+    with open(original_file, 'rb') as f:
+        original_pdf = PdfReader(f)
+        original_page_count = len(original_pdf.pages)
+        app.logger.info(f"Original PDF has {original_page_count} pages")
+    
+    # Get the number of pages in the new file
+    with open(new_file, 'rb') as f:
+        new_pdf = PdfReader(f)
+        new_page_count = len(new_pdf.pages)
+        app.logger.info(f"New PDF has {new_page_count} pages")
+    
+    # Expected total pages after merge
+    expected_page_count = original_page_count + new_page_count
+    
     merger = PdfMerger()
     try:
         # First append the original file
         merger.append(original_file)
-        # Then append the new file (this will be the second page)
+        # Then append the new file
         merger.append(new_file)
         # Write to temporary file
         merger.write(temp_file)
@@ -269,12 +285,16 @@ def merge_pdfs(original_file: str, new_file: str, temp_file: str) -> None:
     if not os.path.exists(temp_file) or os.path.getsize(temp_file) == 0:
         raise Exception("Merged file is empty or does not exist")
         
-    # Verify the merged file has the correct number of pages
+    # Verify the merged file has the expected number of pages
     try:
         with open(temp_file, 'rb') as f:
             pdf = PdfReader(f)
-            if len(pdf.pages) != 2:
-                raise Exception(f"Expected 2 pages in merged file, got {len(pdf.pages)}")
+            actual_page_count = len(pdf.pages)
+            
+            if actual_page_count != expected_page_count:
+                raise Exception(f"Expected {expected_page_count} pages in merged file, got {actual_page_count}")
+            
+            app.logger.info(f"Successfully merged PDFs. New document has {actual_page_count} pages")
     except Exception as e:
         app.logger.error(f"Error verifying merged PDF: {str(e)}")
         raise Exception("Failed to verify merged PDF structure")
