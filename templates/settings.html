@@ -9,30 +9,6 @@
     />
     <title>Scanbot - Settings</title>
     <style>
-      .scanner-list {
-        margin: 2rem 0;
-      }
-      .scanner-item {
-        padding: 1rem;
-        margin-bottom: 1rem;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        transition: all 0.2s ease-in-out;
-      }
-      .scanner-item.selected {
-        border-color: #1095c1;
-        background-color: #e6f7ff;
-        box-shadow: 0 2px 8px rgba(16, 149, 193, 0.15);
-      }
-      .scanner-item.selected p {
-        font-weight: 500;
-        color: #0a6b8a;
-      }
-      .scanner-item.selected button {
-        background-color: #1095c1;
-        color: white;
-        border-color: #1095c1;
-      }
       .error-message {
         color: #842029;
         background-color: #f8d7da;
@@ -51,8 +27,32 @@
         border-radius: 0.25rem;
         display: none;
       }
-      nav {
-        margin-bottom: 2rem;
+      .scanner-list {
+        margin: 2rem 0;
+      }
+      .scanner-item {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border: 1px solid var(--form-element-border-color);
+        border-radius: var(--border-radius);
+        background-color: var(--card-background-color);
+      }
+      .scanner-item p {
+        margin: 0 0 0.5rem 0;
+      }
+      .scanner-item.selected {
+        border-color: var(--primary);
+        background-color: rgba(var(--primary-rgb), 0.05);
+      }
+      .selected-badge {
+        display: block;
+        text-align: center;
+        background-color: var(--primary);
+        color: var(--primary-inverse);
+        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius);
+        font-weight: 500;
+        margin-top: 0.5rem;
       }
       .search-container {
         display: flex;
@@ -64,14 +64,14 @@
         display: none;
       }
       .searching-text {
-        color: #666;
+        color: var(--muted-color);
         margin-left: 1rem;
         display: none;
       }
       .settings-section {
         margin-top: 2rem;
         padding-top: 1rem;
-        border-top: 1px solid #eee;
+        border-top: 1px solid var(--muted-border-color);
       }
     </style>
   </head>
@@ -110,7 +110,7 @@
             <select id="dpi-select" onchange="saveDpiSetting()">
               <option value="150">150 DPI (Draft)</option>
               <option value="300">300 DPI (Normal)</option>
-              <option value="600" selected>600 DPI (High Quality)</option>
+              <option value="600">600 DPI (High Quality)</option>
               <option value="1200">1200 DPI (Very High Quality)</option>
             </select>
             <p>
@@ -160,7 +160,6 @@
           const response = await fetch("/api/scanners");
           const data = await response.json();
 
-          // Stop the search indication as soon as we have a response
           setSearching(false);
 
           const scannerList = document.getElementById("scanner-list");
@@ -177,17 +176,13 @@
                       scanner.device === data.selected_scanner ? "selected" : ""
                     }">
                         <p>${scanner.description}</p>
-                        <button onclick="selectScanner('${
-                          scanner.device
-                        }')" role="button" class="${
-                scanner.device === data.selected_scanner ? "" : "outline"
-              }">
-                            ${
-                              scanner.device === data.selected_scanner
-                                ? "Selected"
-                                : "Select Scanner"
-                            }
-                        </button>
+                        ${
+                          scanner.device === data.selected_scanner
+                            ? '<div class="selected-badge">Selected</div>'
+                            : `<button onclick="selectScanner('${scanner.device}')" role="button" class="outline">
+                                Select Scanner
+                              </button>`
+                        }
                     </div>
                 `
             )
@@ -214,24 +209,38 @@
           }
 
           showSuccess("Scanner selected successfully");
-          // Don't rescan for devices after selection
-          // Just update the UI to show the selection
           document.querySelectorAll(".scanner-item").forEach((item) => {
             if (
+              item.querySelector("button") &&
               item
                 .querySelector("button")
                 .getAttribute("onclick")
                 .includes(device)
             ) {
               item.classList.add("selected");
-              const button = item.querySelector("button");
-              button.textContent = "Selected";
-              button.classList.remove("outline");
-            } else {
+              item.querySelector("button").remove();
+              const selectedBadge = document.createElement("div");
+              selectedBadge.className = "selected-badge";
+              selectedBadge.textContent = "Selected";
+              item.appendChild(selectedBadge);
+            } else if (
+              !item.querySelector(".selected-badge") ||
+              !item
+                .querySelector("button")
+                .getAttribute("onclick")
+                .includes(device)
+            ) {
               item.classList.remove("selected");
-              const button = item.querySelector("button");
-              button.textContent = "Select Scanner";
-              button.classList.add("outline");
+              if (item.querySelector(".selected-badge")) {
+                const badge = item.querySelector(".selected-badge");
+                badge.remove();
+                const button = document.createElement("button");
+                button.setAttribute("role", "button");
+                button.className = "outline";
+                button.textContent = "Select Scanner";
+                button.setAttribute("onclick", `selectScanner('${device}')`);
+                item.appendChild(button);
+              }
             }
           });
         } catch (error) {
@@ -291,8 +300,8 @@
       }
 
       window.addEventListener("load", async () => {
-        await loadSavedScanner(); // First load the saved scanner
-        await scanForDevices(); // Then scan for devices (will highlight the selected scanner)
+        await loadSavedScanner();
+        await scanForDevices();
         await loadDpiSetting();
       });
     </script>

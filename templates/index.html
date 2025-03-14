@@ -18,6 +18,24 @@
         border-radius: 0.25rem;
         display: none;
       }
+      article {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        margin-bottom: 1rem;
+      }
+      article header {
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+      }
+      .button-group {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+      }
+      .button-group button {
+        flex: 1;
+      }
     </style>
   </head>
   <body>
@@ -25,7 +43,7 @@
       <nav>
         <ul>
           <li><strong>Home</strong></li>
-          <li><a href="/settings">Settings</a></li>
+          <li><a href="/settings" onclick="saveState()">Settings</a></li>
         </ul>
       </nav>
       <h1>Scanbot</h1>
@@ -45,6 +63,22 @@
       <div class="grid" id="downloadGrid"></div>
     </main>
     <script>
+      window.addEventListener("load", function () {
+        const savedGrid = localStorage.getItem("downloadGridState");
+        if (savedGrid) {
+          document.getElementById("downloadGrid").innerHTML = savedGrid;
+        } else {
+          reload();
+        }
+      });
+
+      function saveState() {
+        const gridContent = document.getElementById("downloadGrid").innerHTML;
+        localStorage.setItem("downloadGridState", gridContent);
+      }
+
+      window.addEventListener("beforeunload", saveState);
+
       function showError(message) {
         const errorDiv = document.getElementById("error-message");
         errorDiv.textContent = message;
@@ -76,6 +110,7 @@
           }
 
           document.getElementById("downloadGrid").innerHTML = data.html;
+          saveState(); // Save state after updating the grid
         } catch (error) {
           showError(error.message);
         } finally {
@@ -96,6 +131,7 @@
             throw new Error(data.error || "An error occurred while reloading");
           }
           document.getElementById("downloadGrid").innerHTML = data.html;
+          saveState(); // Save state after updating the grid
         } catch (error) {
           showError(error.message);
         }
@@ -119,6 +155,7 @@
             );
           }
           document.getElementById("downloadGrid").innerHTML = data.html;
+          saveState();
         } catch (error) {
           showError(error.message);
         }
@@ -191,6 +228,7 @@
           }
 
           document.getElementById("downloadGrid").innerHTML = data.html;
+          saveState();
         } catch (error) {
           showError(error.message);
         } finally {

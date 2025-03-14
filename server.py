@@ -100,8 +100,11 @@ def createDownloadCardForPdf(path: str):
     file_name = path.split('/')[1]
     return f"""<article>
             <header>{file_name}</header>
-            <button role="button" class="secondary" onclick="download(\'{path}\')">Download</button>
-            <button role="button" class="outline contrary" onclick="deleteFile(\'{path}\')">Delete</button>
+            <div class="button-group">
+                <button role="button" class="secondary" onclick="download(\'{path}\')">Download</button>
+                <button role="button" class="outline" onclick="addPage(\'{path}\')">Add Page</button>
+                <button role="button" class="outline contrary" onclick="deleteFile(\'{path}\')">Delete</button>
+            </div>
             </article>"""
 
 @app.route('/download', methods=['POST'])
@@ -157,6 +160,19 @@ def set_scanner():
         return jsonify({'error': 'Failed to save scanner configuration'}), 500
         
     return jsonify({'success': True, 'selected_scanner': selected_scanner})
+
+@app.route('/api/scanner', methods=['GET'])
+def get_scanner():
+    global selected_scanner
+    
+    try:
+        if os.path.exists('scanRessources/scanner_config'):
+            with open('scanRessources/scanner_config', 'r') as f:
+                selected_scanner = f.read().strip()
+    except Exception as e:
+        app.logger.error(f"Failed to read scanner configuration: {e}")
+    
+    return jsonify({'selected_scanner': selected_scanner})
 
 @app.route('/api/dpi', methods=['GET'])
 def get_dpi():
