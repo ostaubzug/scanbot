@@ -8,6 +8,17 @@
       href="{{ url_for('static', filename='style.css') }}"
     />
     <title>Scanbot</title>
+    <style>
+      .error-message {
+        color: #842029;
+        background-color: #f8d7da;
+        border: 1px solid #f5c2c7;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-radius: 0.25rem;
+        display: none;
+      }
+    </style>
   </head>
   <body>
     <main class="container">
@@ -23,51 +34,88 @@
         <button onclick="scanData('pdf')" role="button">Scan Pdf</button>
         <button class="outline" role="button" onclick="reload()">reload</button>
         <progress id="progress" style="visibility: hidden"></progress>
+        <div id="error-message" class="error-message"></div>
       </div>
       <div class="grid" id="downloadGrid"></div>
     </main>
     <script>
+      function showError(message) {
+        const errorDiv = document.getElementById("error-message");
+        errorDiv.textContent = message;
+        errorDiv.style.display = "block";
+        setTimeout(() => {
+          errorDiv.style.display = "none";
+        }, 5000);
+      }
+
       async function scanData(scantype) {
         document.getElementById("progress").style.visibility = "visible";
+        document.getElementById("error-message").style.display = "none";
         let filename = document.getElementById("filename").value;
-        const response = await fetch("/scanfunction", {
-          method: "post",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            type: scantype,
-            filename: filename,
-          }),
-        });
-        const result = await response.text();
-        document.getElementById("downloadGrid").innerHTML = result;
-        document.getElementById("progress").style.visibility = "hidden";
+        try {
+          const response = await fetch("/scanfunction", {
+            method: "post",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              type: scantype,
+              filename: filename,
+            }),
+          });
+
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.error || "An error occurred while scanning");
+          }
+
+          document.getElementById("downloadGrid").innerHTML = data.html;
+        } catch (error) {
+          showError(error.message);
+        } finally {
+          document.getElementById("progress").style.visibility = "hidden";
+        }
       }
 
       async function reload() {
-        const response = await fetch("/reload", {
-          method: "post",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-        const result = await response.text();
-        document.getElementById("downloadGrid").innerHTML = result;
+        try {
+          const response = await fetch("/reload", {
+            method: "post",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.error || "An error occurred while reloading");
+          }
+          document.getElementById("downloadGrid").innerHTML = data.html;
+        } catch (error) {
+          showError(error.message);
+        }
       }
 
       async function deleteFile(file) {
-        const response = await fetch("/deleteFile", {
-          method: "post",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            filepath: file,
-          }),
-        });
-        const result = await response.text();
-        document.getElementById("downloadGrid").innerHTML = result;
+        try {
+          const response = await fetch("/deleteFile", {
+            method: "post",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              filepath: file,
+            }),
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(
+              data.error || "An error occurred while deleting the file"
+            );
+          }
+          document.getElementById("downloadGrid").innerHTML = data.html;
+        } catch (error) {
+          showError(error.message);
+        }
       }
 
       async function download(file) {

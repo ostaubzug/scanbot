@@ -17,10 +17,46 @@ def home():
 
 @app.route('/scanfunction', methods=['POST'])
 def scan_function():
-    app.logger.info(request.get_json().get('type'))
     file_name = request.get_json().get('filename')
-    subprocess.run(f'scanRessources/scanDocument.sh {file_name}', capture_output=True, text=True, shell=True, check=True, executable="/bin/bash")
-    return createDownloadGrid()
+    
+    if not file_name:
+        return jsonify({"error": "Filename is required"}), 400
+        
+    try:
+        result = subprocess.run(f'scanRessources/scanDocument.sh {file_name}', 
+                              capture_output=True, 
+                              text=True, 
+                              shell=True, 
+                              check=True, 
+                              executable="/bin/bash")
+                              
+        if "scanimage: no SANE devices found" in result.stderr:
+            app.logger.error("No scanner found")
+            return jsonify({"error": "No scanner found. Please check if your scanner is connected."}), 400
+            
+        # Check if the PDF file was actually created
+        expected_pdf = f"scanRessources/{file_name}.pdf"
+        if not os.path.exists(expected_pdf):
+            app.logger.error(f"PDF file not created at expected path: {expected_pdf}")
+            return jsonify({"error": "Failed to create PDF file. Please check scanner connection and try again."}), 500
+            
+        grid_html = createDownloadGrid()
+        return jsonify({"html": grid_html, "success": True})
+        
+    except subprocess.CalledProcessError as e:
+        if "scanimage: no SANE devices found" in e.stderr:
+            app.logger.error("No scanner found")
+            return jsonify({"error": "No scanner found. Please check if your scanner is connected."}), 400
+        elif "scanimage: open of device" in e.stderr:
+            app.logger.error("Scanner connection error")
+            return jsonify({"error": "Could not open scanner. Please check if it's connected and powered on."}), 400
+        else:
+            app.logger.error(f"Scanner error: {e.stderr}")
+            return jsonify({"error": "An unexpected error occurred while scanning. Please check your scanner connection."}), 400
+        
+    except Exception as e:
+        app.logger.error(f"Unexpected error during scan: {str(e)}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
 
 @app.route('/reload', methods=['POST'])
 def createDownloadGrid():
@@ -28,7 +64,7 @@ def createDownloadGrid():
     html = ""
     for file in pdf_files:
         html += createDownloadCardForPdf(file)
-    return html
+    return jsonify({"html": html, "success": True})
     
 
 def createDownloadCardForPdf(path: str):
@@ -56,8 +92,16 @@ def download():
 
 @app.route('/deleteFile', methods=['POST'])
 def delete():
-    os.remove(request.get_json().get('filepath'))
-    return createDownloadGrid()
+    try:
+        filepath = request.get_json().get('filepath')
+        if not os.path.exists(filepath):
+            return jsonify({"error": "File not found"}), 404
+        os.remove(filepath)
+        grid_html = createDownloadGrid()
+        return jsonify({"html": grid_html, "success": True})
+    except Exception as e:
+        app.logger.error(f"Delete error: {str(e)}")
+        return jsonify({"error": f"Failed to delete file: {str(e)}"}), 500
 
 if __name__ == '__main__':
      app.run(host='0.0.0.0', port=5400, debug=True)
