@@ -4,6 +4,7 @@ import time, glob, os
 from flask import Flask, render_template, request, jsonify, send_file
 import stat
 from PyPDF2 import PdfMerger, PdfReader
+import datetime
 
 app = Flask(__name__)
 
@@ -102,16 +103,8 @@ def createDownloadCardForPdf(path: str):
             <header>{file_name}</header>
             <div class="document-actions">
                 <button role="button" class="secondary" onclick="download('{path}')">Download</button>
-                <button role="button" class="outline contrary" onclick="deleteFile('{path}')">Delete</button>
-            </div>
-            <div class="add-page-section">
-                <input
-                    type="text"
-                    class="add-page-input"
-                    placeholder="Enter filename for new page"
-                    aria-label="New page filename"
-                />
                 <button role="button" class="outline" onclick="addPage('{path}')">Add Page</button>
+                <button role="button" class="outline contrary" onclick="deleteFile('{path}')">Delete</button>
             </div>
             </article>"""
 
@@ -316,6 +309,27 @@ def verify_file_exists(file_path: str, description: str) -> None:
         app.logger.error(error_msg)
         raise FileNotFoundError(error_msg)
 
+def generate_new_filename(original_file: str) -> str:
+    """
+    Generate a new filename based on the original filename plus a timestamp.
+    
+    Args:
+        original_file: Path to the original file
+        
+    Returns:
+        str: A new unique filename (without .pdf extension)
+    """
+    # Extract the original filename without extension
+    original_name = os.path.splitext(original_file.split('/')[-1])[0]
+    
+    # Generate a timestamp
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    # Create a new filename with original name and timestamp
+    new_filename = f"{original_name}_page_{timestamp}"
+    
+    return new_filename
+
 @app.route('/add_page', methods=['POST'])
 def add_page():
     """
@@ -323,7 +337,6 @@ def add_page():
     
     Request body:
         original_file: Path to the original PDF
-        new_filename: Name for the new page (without .pdf extension)
         
     Returns:
         JSON response with updated HTML grid or error message
@@ -332,13 +345,14 @@ def add_page():
         # Validate input
         data = request.get_json()
         original_file = data.get('original_file')
-        new_filename = data.get('new_filename')
         
-        if not original_file or not new_filename:
-            return jsonify({"error": "Both original file and new filename are required"}), 400
+        if not original_file:
+            return jsonify({"error": "Original file path is required"}), 400
         
-        new_filename = new_filename.rstrip('.pdf')
-        app.logger.info(f"Starting add_page with original_file: {original_file}, new_filename: {new_filename}")
+        # Generate a new filename
+        new_filename = generate_new_filename(original_file)
+        
+        app.logger.info(f"Starting add_page with original_file: {original_file}, auto-generated filename: {new_filename}")
         
         # Verify original file exists
         verify_file_exists(original_file, "Original file")

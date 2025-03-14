@@ -27,11 +27,6 @@
         display: flex;
         gap: 0.5rem;
         flex-wrap: wrap;
-      }
-      .add-page-section {
-        display: flex;
-        gap: 0.5rem;
-        align-items: center;
         margin-top: 0.5rem;
       }
     </style>
@@ -229,18 +224,7 @@
       }
 
       async function addPage(originalFile) {
-        const card = document.querySelector(`[data-file="${originalFile}"]`);
-        const filenameInput = card.querySelector(".add-page-input");
-        const newFilename = filenameInput.value;
-
-        if (!newFilename) {
-          showError("Please enter a filename for the new page");
-          return;
-        }
-
-        console.log(
-          `Starting add page process for ${originalFile} with new page ${newFilename}`
-        );
+        console.log(`Starting add page process for ${originalFile}`);
 
         try {
           const checkResponse = await fetch("/check_file", {
@@ -275,7 +259,6 @@
             },
             body: JSON.stringify({
               original_file: originalFile,
-              new_filename: newFilename,
             }),
           });
 
