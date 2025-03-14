@@ -3,6 +3,7 @@ from flask import Response
 import time, glob, os
 from flask import Flask, render_template, request, jsonify, send_file
 import stat
+from PyPDF2 import PdfMerger
 
 app = Flask(__name__)
 
@@ -151,6 +152,56 @@ def set_scanner():
         return jsonify({'error': 'Failed to save scanner configuration'}), 500
         
     return jsonify({'success': True, 'selected_scanner': selected_scanner})
+
+@app.route('/add_page', methods=['POST'])
+def add_page():
+    try:
+        data = request.get_json()
+        original_file = data.get('original_file')
+        new_filename = data.get('new_filename')
+        
+        if not original_file or not new_filename:
+            return jsonify({"error": "Both original file and new filename are required"}), 400
+            
+        # Scan new page
+        result = subprocess.run(f'scanRessources/scanDocument.sh {new_filename}', 
+                              capture_output=True, 
+                              text=True, 
+                              shell=True, 
+                              check=True, 
+                              executable="/bin/bash")
+                              
+        new_pdf = f"scanRessources/{new_filename}.pdf"
+        
+        if not os.path.exists(new_pdf):
+            return jsonify({"error": "Failed to create new page"}), 500
+            
+        # Merge PDFs
+        merger = PdfMerger()
+        merger.append(original_file)
+        merger.append(new_pdf)
+        
+        # Save merged PDF
+        merger.write(original_file)
+        merger.close()
+        
+        # Clean up temporary new page
+        os.remove(new_pdf)
+        
+        grid_html = createDownloadGrid()
+        return jsonify({"html": grid_html, "success": True})
+        
+    except subprocess.CalledProcessError as e:
+        if "scanimage: no SANE devices found" in e.stderr:
+            return jsonify({"error": "No scanner found. Please check if your scanner is connected."}), 400
+        elif "scanimage: open of device" in e.stderr:
+            return jsonify({"error": "Could not open scanner. Please check if it's connected and powered on."}), 400
+        else:
+            return jsonify({"error": f"Scanner error: {e.stderr}"}), 400
+            
+    except Exception as e:
+        app.logger.error(f"Error adding page: {str(e)}")
+        return jsonify({"error": f"Failed to add page: {str(e)}"}), 500
 
 if __name__ == '__main__':
      app.run(host='0.0.0.0', port=5400, debug=True)
